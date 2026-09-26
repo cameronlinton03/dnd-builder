@@ -277,7 +277,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
       <label class="sr" for="r_camp">Campaign</label>
       <select id="r_camp" class="ononly"></select>
       <button type="button" id="r_save" class="ononly">Save to roster</button>
-      <button type="button" id="r_filesave" class="plonly offshow" title="Saves a small file with everything about this character. Send it to your DM, or keep it as a backup.">Save as a file</button>
+      <button type="button" id="r_filesave" class="plonly offshow" title="Shares a small file with everything about this character: send it to your DM, or save it as a backup. Anyone with this builder can open it.">Share character sheet</button>
       <button type="button" class="ghost plonly offshow" id="r_fileopen" title="Open a character file saved from this builder">Open a file</button>
       <button type="button" class="ghost" id="lv_btn">Level up</button>
       <button type="button" class="ghost" id="r_new">New character</button>
@@ -300,7 +300,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
     <div id="r_list"></div>
     <div class="rfoot">
       <div><label for="r_newcamp">New campaign</label><div class="addc"><input type="text" id="r_newcamp" placeholder="e.g. The Sinofrian Plague"><button type="button" id="r_addcamp">Add campaign</button></div></div>
-      <div><span class="lbl">Share a character</span><div class="addc"><button type="button" class="ghost" id="r_export">Save as a file</button><button type="button" class="ghost" id="r_import_btn">Open a file</button><input type="file" id="r_import" accept=".json,application/json" hidden></div></div>
+      <div><span class="lbl">Share a character</span><div class="addc"><button type="button" class="ghost" id="r_export">Share character sheet</button><button type="button" class="ghost" id="r_import_btn">Open a file</button><input type="file" id="r_import" accept=".json,application/json" hidden></div></div>
     </div>
   </div>
 </section>
@@ -3636,7 +3636,7 @@ function fmtDate(iso){try{return new Date(iso).toLocaleDateString(undefined,{mon
 
 async function initRoster(){
   renderRosterBar();
-  if(!window.claude){rosterOff("Your character is kept in this browser as you work. Use Save as a file to back it up or send it to your DM.");return;}
+  if(!window.claude){rosterOff("Your character is kept in this browser as you work. Use Share character sheet to send it to your DM or save a backup.");return;}
   let db=null,user=null;
   try{[db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);}catch(e){}
   const uid=user?await user.id():null;
@@ -3833,14 +3833,19 @@ $("roster").addEventListener("click",e=>{
 $("roster").addEventListener("change",e=>{const d=e.target.dataset;if(d.move)moveChar(d.move,e.target.value);});
 $("roster").addEventListener("keydown",e=>{const d=e.target.dataset;if(d.renamein&&e.key==="Enter"){e.preventDefault();renameCamp(d.renamein,e.target.value);}if(d.renamein&&e.key==="Escape"){RS.rename="";renderRoster();}});
 // character files (to hand a character to someone else, or keep a backup)
-async function exportChar(){
+async function exportChar(share){
   const slug=(S.name||"character").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"character";
   const data=JSON.stringify({format:"character-ledger",version:1,state:{...S,campaign:""}},null,1);
+  // the phone's share sheet (Messages, Discord, Save to Files…) where the browser allows it; otherwise a normal download
+  if(share===true&&navigator.share&&navigator.canShare){let f=null;try{f=new File([data],`${slug}.json`,{type:"application/json"});}catch(e){}
+    if(f&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:`${S.name||"Character"} (Character Ledger)`});
+        if(!RS.curId)markPristine();renderRosterBar();rsStatus(`Shared ${esc(S.name||"your character")}. Whoever gets the file can open it in this builder with "Open a file". Share again after you level up.`);return;}
+      catch(e){if(e&&e.name==="AbortError"){rsStatus("Sharing cancelled.");return;}}}}
   const r=await offerFile(`${slug}.json`,data,$("r_status"));
   if(r==="saved"){if(!RS.curId)markPristine();renderRosterBar();rsStatus(isPlayerView()?`Saved ${esc(slug)}.json. Send that file to your DM; they open it in their copy of the builder. Save again after you level up.`:`Saved ${esc(slug)}.json. Anyone with this builder can open it with "Open a file".`);}
 }
-$("r_export").addEventListener("click",exportChar);
-$("r_filesave").addEventListener("click",exportChar);
+$("r_export").addEventListener("click",()=>exportChar(true));
+$("r_filesave").addEventListener("click",()=>exportChar(true));
 function askOpenFile(){if(isDirtyUnsaved()&&RS.confirm!=="import"){RS.confirm="import";rsStatus(`Opening a file replaces the character you're editing, which isn't ${savedWhere()}. <button type="button" class="act" data-savefirst="1">Save it first</button> or <button type="button" class="act" data-openanyway="1">open a file anyway</button>.`);return;}RS.confirm="";$("r_import").click();}
 $("r_fileopen").addEventListener("click",askOpenFile);
 $("r_import_btn").addEventListener("click",askOpenFile);
