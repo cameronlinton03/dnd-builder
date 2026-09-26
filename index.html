@@ -115,6 +115,7 @@ button.alt{background:var(--teal);color:var(--on-teal);}
 #frame{display:block;width:100%;border:0;background:#fff;height:calc(100vh - 150px);min-height:480px;}
 @media(max-width:959px){.preview{position:static;} #frame{height:900px;}}
 .dlgrp{display:inline-flex;gap:.35rem;align-items:center}
+[data-share].ready{box-shadow:0 0 0 3px color-mix(in srgb,var(--legend) 45%,transparent)}
 .itrow{border:1px solid var(--line);border-radius:var(--radius);padding:.45rem .6rem;margin:.4rem 0;background:var(--panel)}
 .ithead{display:flex;align-items:center;gap:.45rem}.ithead button{margin-left:auto}.warnc{color:var(--warn)}
 .itctl{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin:.35rem 0}.itctl select{flex:1 1 9rem;min-width:0}.itctl input[type=text]{flex:1 1 10rem}
@@ -277,7 +278,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
       <label class="sr" for="r_camp">Campaign</label>
       <select id="r_camp" class="ononly"></select>
       <button type="button" id="r_save" class="ononly">Save to roster</button>
-      <button type="button" id="r_filesave" class="plonly offshow" title="Shares a small file with everything about this character: send it to your DM, or save it as a backup. Anyone with this builder can open it.">Share character sheet</button>
+      <button type="button" id="r_filesave" class="plonly offshow" data-share="1" title="Shares a printable PDF of the sheet plus the character file (which opens in this builder). Send them to your DM, or save them as a backup.">Share character sheet</button>
       <button type="button" class="ghost plonly offshow" id="r_fileopen" title="Open a character file saved from this builder">Open a file</button>
       <button type="button" class="ghost" id="lv_btn">Level up</button>
       <button type="button" class="ghost" id="r_new">New character</button>
@@ -300,7 +301,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
     <div id="r_list"></div>
     <div class="rfoot">
       <div><label for="r_newcamp">New campaign</label><div class="addc"><input type="text" id="r_newcamp" placeholder="e.g. The Sinofrian Plague"><button type="button" id="r_addcamp">Add campaign</button></div></div>
-      <div><span class="lbl">Share a character</span><div class="addc"><button type="button" class="ghost" id="r_export">Share character sheet</button><button type="button" class="ghost" id="r_import_btn">Open a file</button><input type="file" id="r_import" accept=".json,application/json" hidden></div></div>
+      <div><span class="lbl">Share a character</span><div class="addc"><button type="button" class="ghost" id="r_export">Share character file</button><button type="button" class="ghost" id="r_import_btn">Open a file</button><input type="file" id="r_import" accept=".json,application/json" hidden></div></div>
     </div>
   </div>
 </section>
@@ -473,10 +474,10 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
     </div>
     <button type="button" class="ghost sm" id="play_btn" aria-pressed="false">Play mode</button>
     <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto"><input type="checkbox" id="tips"> Beginner notes</label>
-    <span class="dlgrp"><button type="button" class="alt" id="dl_btn">Download PDF</button><button type="button" class="ghost sm" id="dl_html" title="Download as a web page">.html</button></span>
+    <span class="dlgrp"><button type="button" class="alt" id="dl_btn" data-share="1">Share</button></span>
   </div>
   <iframe id="frame" title="Character sheet preview"></iframe>
-  <p id="dl_status" style="border-bottom:0">Downloads a letter-size PDF, ready to print or share. The .html button saves a web page version instead.</p>
+  <p id="dl_status" style="border-bottom:0">Share sends a printable PDF of this sheet plus the character file, which opens in this builder. On a phone, choose Save to Files to keep them, or send them to your DM.</p>
 </aside>
 </div></div>
 <dialog id="qb" aria-labelledby="qb_head"><div class="lvhead"><b id="qb_head">Quick build</b><button type="button" class="ghost sm" id="qb_x" aria-label="Close">×</button></div>
@@ -3161,22 +3162,45 @@ async function makePDF(mode,progress){
 
 const sheetSlug=()=>(S.name||"character").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"character";
 let pdfBusy=false;
-$("dl_btn").addEventListener("click",async()=>{
-  if(pdfBusy)return;const st=$("dl_status"),m=sheetMode(),btn=$("dl_btn");
-  const filename=`${sheetSlug()}-${m==="pc"?"sheet":"npc"}.pdf`;
-  pdfBusy=true;btn.disabled=true;const was=btn.textContent;btn.textContent="Making PDF…";st.textContent="Loading the PDF tools…";
-  let blob;
-  try{blob=await makePDF(m,(i)=>{st.textContent=i===1?"Laying out the pages…":"Writing the PDF…";});}
-  catch(e){st.textContent="The PDF tools couldn't load here. Use the .html button, then Print → Save as PDF.";pdfBusy=false;btn.disabled=false;btn.textContent=was;return;}
-  pdfBusy=false;btn.disabled=false;btn.textContent=was;
-  const r=await offerFile(filename,blob,st);
-  if(r==="saved")st.textContent=`Saved ${filename}.`;
-});
-$("dl_html").addEventListener("click",async()=>{
-  const st=$("dl_status"),m=sheetMode(),filename=`${sheetSlug()}-${m==="pc"?"sheet":"npc"}.html`;
-  const r=await offerFile(filename,sheetHTML(m,false),st);
-  if(r==="saved")st.textContent=`Saved ${filename}. Open it and use its Print button for paper.`;
-});
+/* Share: a PDF of the sheet plus the character file, through the phone's share sheet (Messages, Save to Files…).
+   Making the PDF takes a moment, and phones only allow sharing straight after a tap, so if the first try is refused
+   the button turns into "Tap to share" and the next tap shares the ready files at once. No share sheet? Both download. */
+const SHR={key:"",files:null};
+const shareKey=()=>JSON.stringify(S)+"|"+sheetMode();
+function shareBtns(){return [...document.querySelectorAll("[data-share]")];}
+function shareLabel(ready){shareBtns().forEach(b=>{b.dataset.label=b.dataset.label||b.textContent;b.textContent=ready?"Tap to share":b.dataset.label;b.classList.toggle("ready",!!ready);});}
+function shareMsg(t){$("dl_status").textContent=t;rsStatus(esc(t));}
+async function shareFiles(files){const st=$("dl_status");
+  try{await navigator.share({files,title:`${S.name||"Character"} (Character Ledger)`});SHR.files=null;shareLabel(false);
+    if(!RS.curId)markPristine();renderRosterBar();shareMsg(`Shared ${S.name||"your character"}. The .json file opens in this builder with "Open a file"; share again after you level up.`);return "ok";}
+  catch(e){if(e&&e.name==="AbortError"){SHR.files=null;shareLabel(false);shareMsg("Sharing cancelled.");return "cancel";}return e&&e.name==="NotAllowedError"?"notallowed":"fail";}}
+async function downloadFiles(files){const st=$("dl_status");let n=0;
+  for(const f of files){if(!isPlayerView()&&f.name.endsWith(".json")&&files.length>1)continue; // DMs have "Save character file" for that
+    const r=await offerFile(f.name,f,st);if(r!=="saved")return;n++;}
+  SHR.files=null;shareLabel(false);if(!RS.curId&&files.some(f=>f.name.endsWith(".json"))&&isPlayerView())markPristine();renderRosterBar();
+  shareMsg(`Saved ${files.filter(f=>isPlayerView()||!f.name.endsWith(".json")||files.length===1).map(f=>f.name).join(" and ")}.`);}
+async function shareSheet(){
+  if(pdfBusy)return;
+  const canShareApi=!!(navigator.share&&navigator.canShare);
+  // second tap: files are ready, share straight away
+  if(SHR.files&&SHR.key===shareKey()){const files=SHR.files;const r=canShareApi&&navigator.canShare({files})?await shareFiles(files):"fail";if(r==="notallowed"||r==="fail")await downloadFiles(files);return;}
+  SHR.files=null;shareLabel(false);
+  const m=sheetMode(),slug=sheetSlug(),files=[];
+  pdfBusy=true;shareBtns().forEach(b=>{b.disabled=true;b.dataset.label=b.dataset.label||b.textContent;b.textContent="Preparing…";});shareMsg("Making the PDF…");
+  try{const blob=await makePDF(m,i=>{$("dl_status").textContent=i===1?"Laying out the pages…":"Writing the PDF…";});files.push(new File([blob],`${slug}-${m==="pc"?"sheet":"npc"}.pdf`,{type:"application/pdf"}));}
+  catch(e){shareMsg("The PDF couldn't be made (it needs an internet connection the first time). Sharing the character file on its own.");}
+  files.push(new File([JSON.stringify({format:"character-ledger",version:1,state:{...S,campaign:""}},null,1)],`${slug}.json`,{type:"application/json"}));
+  pdfBusy=false;shareBtns().forEach(b=>b.disabled=false);shareLabel(false);
+  SHR.key=shareKey();
+  let list=files;
+  if(canShareApi&&!navigator.canShare({files:list})&&list.length>1&&navigator.canShare({files:[list[0]]}))list=[list[0]]; // some browsers won't share .json files
+  if(canShareApi&&navigator.canShare({files:list})){const r=await shareFiles(list);
+    if(r==="notallowed"){SHR.files=list;shareLabel(true);shareMsg("Ready. Tap Share again to open your share options.");return;}
+    if(r==="fail")await downloadFiles(files);
+    else if(r==="ok"&&list.length<files.length)await downloadFiles([files[1]]);
+    return;}
+  await downloadFiles(files);}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-share]");if(b){e.preventDefault();shareSheet();}});
 
 /* ---------- inventory, money and weapon mastery (step 7) ---------- */
 const newId=()=>"i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -3845,7 +3869,6 @@ async function exportChar(share){
   if(r==="saved"){if(!RS.curId)markPristine();renderRosterBar();rsStatus(isPlayerView()?`Saved ${esc(slug)}.json. Send that file to your DM; they open it in their copy of the builder. Save again after you level up.`:`Saved ${esc(slug)}.json. Anyone with this builder can open it with "Open a file".`);}
 }
 $("r_export").addEventListener("click",()=>exportChar(true));
-$("r_filesave").addEventListener("click",()=>exportChar(true));
 function askOpenFile(){if(isDirtyUnsaved()&&RS.confirm!=="import"){RS.confirm="import";rsStatus(`Opening a file replaces the character you're editing, which isn't ${savedWhere()}. <button type="button" class="act" data-savefirst="1">Save it first</button> or <button type="button" class="act" data-openanyway="1">open a file anyway</button>.`);return;}RS.confirm="";$("r_import").click();}
 $("r_fileopen").addEventListener("click",askOpenFile);
 $("r_import_btn").addEventListener("click",askOpenFile);
