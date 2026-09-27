@@ -171,6 +171,11 @@ body.dmmode .grid{display:none}
 .fadd{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;margin-top:.6rem;padding-top:.5rem;border-top:1px dashed var(--line)}.fadd input{width:4.2rem;padding:.3rem .4rem}.fadd #fm_name{width:11rem}.fadd #fm_count{width:3.4rem}
 @media(max-width:620px){.frow{grid-template-columns:3.6rem minmax(0,1fr)}.frow .finit{width:3.6rem}.fctl{grid-column:1 / -1;justify-content:flex-start}}
 .dmtabs{display:flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-left:auto}.dmtabs button{background:transparent;color:var(--ink-soft);border:0;border-radius:0;padding:.4rem .8rem;font-size:.85rem}.dmtabs button+button{border-left:1px solid var(--line)}.dmtabs button[aria-selected="true"]{background:var(--bronze);color:var(--on-accent)}
+.tagbar{display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;margin:-.3rem 0 .8rem}
+.tagc{background:transparent;color:var(--ink-soft);border:1px solid var(--line);border-radius:99px;padding:.15rem .6rem;font-size:.78rem;font-weight:600}
+.tagc.on{background:var(--bronze);border-color:var(--bronze);color:var(--on-accent)}.tagc.sm{font-size:.7rem;padding:0 .45rem;display:inline-block}
+.ntags{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.35rem}.tagpick{display:flex;flex-wrap:wrap;gap:.3rem;margin:.2rem 0 .1rem}
+.tagedit{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.35rem .6rem}.tagrow{display:flex;gap:.3rem;align-items:center}
 .nttools{display:flex;flex-wrap:wrap;gap:.45rem .6rem;align-items:center;margin:.2rem 0 .8rem}.nttools input[type=search]{max-width:17rem;flex:1 1 12rem}
 .ntgroup h3{font-size:1.05rem;margin:.9rem 0 .45rem;border-bottom:1px solid var(--line);padding-bottom:.2rem}
 .ntgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:.6rem}
@@ -1068,7 +1073,7 @@ const WEAPONS={
 
 /* ================= STATE ================= */
 const $=id=>document.getElementById(id);
-const defaults=()=>({lang:{},npcMeta:{loc:"",chap:"",status:"alive",att:"neutral",note:""},cls:"Fighter",level:1,sub:"",subOther:"",sp:"Human",spChoice:"",keen:"Perception",spSkills:[],spAb:"",humanFeat:"Tough",size:"Medium",asiFeat:[],inv:[],invX:[],
+const defaults=()=>({lang:{},npcMeta:{tags:[],status:"alive",att:"neutral",note:""},cls:"Fighter",level:1,sub:"",subOther:"",sp:"Human",spChoice:"",keen:"Perception",spSkills:[],spAb:"",humanFeat:"Tough",size:"Medium",asiFeat:[],inv:[],invX:[],
   bg:"Soldier",bgmode:"21",plus2:"",plus1:"",bgTool:"",method:"array",scores:{},asi:[],boon:"",
   classSkills:[],extraSkills:[],expertise:[],armor:"",shield:false,weapons:[],gear:"",gearTouched:false,
   name:"",player:"",align:"",notes:"",title:"",cr:"",pronoun:"they",appearance:"",personality:"",goals:"",secret:"",mode:"pc",opts:{},kind:"pc",campaign:"",spells:{pick:{},land:"Temperate"},track:{slots:{},pact:0,used:{},conc:"",log:"",hp:null,temp:0,ds:[0,0],hd:0,res:{},insp:false,cond:[],exh:0},items:[],money:{pp:0,gp:0,ep:0,sp:0,cp:0},mastery:[],hpRolls:{},tips:true,mc:[],mcSkills:{},dataV:2,
@@ -3778,60 +3783,81 @@ const MONSTERS=[{"n":"Aboleth","sz":"Large","t":"aberration","al":"lawful evil",
    stat block by name, or one typed in by hand. */
 const MON_BY=Object.fromEntries(MONSTERS.map(m=>[m.n,m]));
 const ATT={friendly:"Friendly",neutral:"Neutral",hostile:"Hostile",unknown:"Unknown"},STAT={alive:"Alive",dead:"Dead",missing:"Missing",unknown:"Unknown"};
-const NPCMETA0=()=>({loc:"",chap:"",status:"alive",att:"neutral",note:""});
+const NPCMETA0=()=>({tags:[],status:"alive",att:"neutral",note:""});
 DMV.tab=(()=>{try{return localStorage.getItem("ledger_dmtab")||"party";}catch(e){return "party";}})();
-DMV.group=(()=>{try{return localStorage.getItem("ledger_dmgroup")||"loc";}catch(e){return "loc";}})();
-DMV.q="";DMV.edit="";DMV.add=null;
+DMV.q="";DMV.edit="";DMV.add=null;DMV.tagf=[];DMV.tagEdit=null;DMV.migrated={};
 const crNum=c=>c==="1/8"?.125:c==="1/4"?.25:c==="1/2"?.5:+c||0;
+/* tags: each campaign keeps its own list (renamable); NPCs and creatures carry tag ids */
+const TAGS0=()=>[{id:"g1",name:"Group 1"},{id:"g2",name:"Group 2"},{id:"g3",name:"Group 3"}];
+function campTags(camp){if(!camp){try{const t=JSON.parse(localStorage.getItem("ledger_tags_none")||"null");if(Array.isArray(t))return t;}catch(e){}return TAGS0();}
+  const c=RS.camps.find(x=>x.id===camp);return c&&Array.isArray(c.tags)?c.tags:TAGS0();}
+async function saveCampTags(camp,tags){if(!camp){try{localStorage.setItem("ledger_tags_none",JSON.stringify(tags));}catch(e){}renderDM();return;}
+  const c=RS.camps.find(x=>x.id===camp);if(c)c.tags=tags;renderDM();try{await RS.campCol.doc(camp).update({tags});}catch(e){writeErr(e);}}
+const newTagId=()=>"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function creBlock(c){const b=c.base&&MON_BY[c.base]?{...MON_BY[c.base]}:{...(c.block||{})};b.n=c.name||b.n||"Creature";return b;}
 function castEntries(camp){const out=[];
   RS.chars.filter(c=>(c.kind||"pc")==="npc"&&(c.campaign||"")===camp).forEach(c=>{const st=c.id===RS.curId?S:c.state||{};
-    try{const m=withState(st,()=>({ac:snapshot().ac,hp:snapshot().hp,cr:S.cr||estimateCR().cr,line:classLineText?(mcActive()?classLineText():`${className()} ${S.level}`):S.cls,sp:species().name,meta:{...NPCMETA0(),...(S.npcMeta||{})}}));
+    try{const m=withState(st,()=>({ac:snapshot().ac,hp:snapshot().hp,cr:S.cr||estimateCR().cr,line:mcActive()?classLineText():`${className()} ${S.level}`,sp:species().name,meta:{...NPCMETA0(),...(S.npcMeta||{})}}));
       out.push({src:"npc",id:c.id,name:c.name||"Unnamed",sub:`${m.sp} ${m.line}`,ac:m.ac,hp:m.hp,cr:m.cr,meta:m.meta});}catch(e){}});
   (RS.cres||[]).filter(c=>(c.campaign||"")===camp).forEach(c=>{const b=creBlock(c);
     out.push({src:"cre",id:c.id,name:c.name||b.n,sub:`${c.base&&c.base!==c.name?c.base+" · ":""}${b.sz||""} ${b.t||"creature"}`.trim(),ac:b.ac,hp:b.hp,cr:b.cr||"–",meta:{...NPCMETA0(),...(c.meta||{})}});});
-  return out;}
+  out.forEach(x=>{if(!Array.isArray(x.meta.tags))x.meta.tags=[];});return out;}
+// the first version used Location and Chapter boxes: turn those into tags once
+function ntMigrate(camp,all){if(DMV.migrated[camp])return;const old=all.filter(x=>x.meta.loc||x.meta.chap);if(!old.length){DMV.migrated[camp]=true;return;}
+  if(camp&&!RS.campsLoaded)return;DMV.migrated[camp]=true;
+  let tags=[...campTags(camp)];const idOf=name=>{let t=tags.find(x=>x.name.toLowerCase()===name.toLowerCase());if(!t){t={id:newTagId(),name};tags.push(t);}return t.id;};
+  old.forEach(x=>{x._mig=[...new Set([...x.meta.tags,...[x.meta.loc,x.meta.chap].filter(Boolean).map(idOf)])];});
+  saveCampTags(camp,tags).then(()=>Promise.all(old.map(x=>ntSaveMeta(`${x.src}:${x.id}`,{...x.meta,tags:x._mig,loc:"",chap:""})))).then(renderDM);}
+const tagChip=(t,on,attr)=>`<button type="button" class="tagc${on?" on":""}" ${attr} aria-pressed="${!!on}">${esc(t.name)}</button>`;
 function npcTrackerHTML(camp){const e=esc;
   if(!RS.db)return `<p class="hint">NPC and creature tracking needs your roster, so it works on your Claude page (not in a downloaded copy).</p>`;
-  const all=castEntries(camp),g=DMV.group,q=DMV.q.trim().toLowerCase();
-  const list=all.filter(x=>!q||`${x.name} ${x.sub} ${x.meta.loc} ${x.meta.chap} ${x.meta.note}`.toLowerCase().includes(q));
-  const locs=[...new Set(all.map(x=>x.meta.loc).filter(Boolean))].sort(),chaps=[...new Set(all.map(x=>x.meta.chap).filter(Boolean))].sort();
-  let h=`<div class="nttools"><div class="seg" role="radiogroup" aria-label="Group by"><label><input type="radio" name="nt_group" value="loc"${g==="loc"?" checked":""}><span>By location</span></label><label><input type="radio" name="nt_group" value="chap"${g==="chap"?" checked":""}><span>By chapter</span></label></div>
-   <input type="search" id="nt_q" placeholder="Search names, places, notes" value="${e(DMV.q)}" aria-label="Search NPCs and creatures">
-   <button type="button" class="sm" data-nt="addcre">+ Creature or monster</button><button type="button" class="ghost sm" data-nt="newnpc" title="Build a new NPC in the builder, filed in this campaign">+ New NPC</button></div>
-   <datalist id="dl_loc">${locs.map(x=>`<option value="${e(x)}">`).join("")}</datalist><datalist id="dl_chap">${chaps.map(x=>`<option value="${e(x)}">`).join("")}</datalist>`;
-  if(DMV.add)h+=creAddHTML();
+  const all=castEntries(camp);ntMigrate(camp,all);
+  const tags=campTags(camp),tid=new Set(tags.map(t=>t.id)),q=DMV.q.trim().toLowerCase();DMV.tagf=DMV.tagf.filter(x=>x==="_none"||tid.has(x));
+  const tagNames=x=>x.meta.tags.map(id=>(tags.find(t=>t.id===id)||{}).name||"").join(" ");
+  const list=all.filter(x=>(!q||`${x.name} ${x.sub} ${tagNames(x)} ${x.meta.note}`.toLowerCase().includes(q))&&DMV.tagf.every(f=>f==="_none"?!x.meta.tags.some(i=>tid.has(i)):x.meta.tags.includes(f)));
+  const count=id=>all.filter(x=>x.meta.tags.includes(id)).length;
+  let h=`<div class="nttools"><input type="search" id="nt_q" placeholder="Search names, tags, notes" value="${e(DMV.q)}" aria-label="Search NPCs and creatures">
+   <button type="button" class="sm" data-nt="addcre">+ Creature or monster</button><button type="button" class="ghost sm" data-nt="newnpc" title="Build a new NPC in the builder, filed in this campaign">+ New NPC</button></div>`;
+  if(DMV.tagEdit){h+=`<div class="ntadd"><div class="ntaddh"><b>Tags for this campaign</b><span class="small muted">Rename them, add as many as you like: places, chapters, factions, "enemies"…</span></div>
+    <div class="tagedit">${DMV.tagEdit.map((t,i)=>`<div class="tagrow"><input type="text" data-tagname="${i}" value="${e(t.name)}" aria-label="Tag name"><button type="button" class="ghost xs" data-nt="tagdel" data-i="${i}" aria-label="Delete ${e(t.name)}">Delete</button></div>`).join("")}</div>
+    <div class="ntbtns"><button type="button" class="ghost sm" data-nt="tagadd">+ Add a tag</button><button type="button" class="sm" data-nt="tagsave">Save tags</button><button type="button" class="ghost sm" data-nt="tagcancel">Cancel</button></div>
+    <p class="small muted" style="margin:.3rem 0 0">Deleting a tag just removes it from everyone who has it.</p></div>`;}
+  else h+=`<div class="tagbar"><span class="small muted">Show:</span>${tags.map(t=>tagChip({name:`${t.name} (${count(t.id)})`},DMV.tagf.includes(t.id),`data-ntf-tag="${e(t.id)}"`)).join("")}${tagChip({name:`Untagged (${all.filter(x=>!x.meta.tags.some(i=>tid.has(i))).length})`},DMV.tagf.includes("_none"),'data-ntf-tag="_none"')}${DMV.tagf.length?`<button type="button" class="ghost xs" data-nt="tagclear">Show all</button>`:""}<button type="button" class="ghost xs" data-nt="tagmanage">Rename or add tags</button></div>`;
+  if(DMV.add)h+=creAddHTML(tags);
   if(!all.length)return h+`<p class="hint">No NPCs or creatures in this campaign yet. Save an NPC from the builder (set its type to NPC and pick this campaign), or add a creature above.</p>`;
-  const key=x=>x.meta[g]||"",groups={};list.forEach(x=>(groups[key(x)]=groups[key(x)]||[]).push(x));
-  const order=Object.keys(groups).sort((a,b)=>(!a)-(!b)||a.localeCompare(b));
-  h+=order.map(k=>`<div class="ntgroup"><h3>${k?e(k):g==="loc"?"No location yet":"No chapter yet"} <span class="small muted">${groups[k].length}</span></h3><div class="ntgrid">${groups[k].sort((a,b)=>(a.meta.status==="dead")-(b.meta.status==="dead")||a.name.localeCompare(b.name)).map(ntCard).join("")}</div></div>`).join("")||`<p class="hint">Nothing matches that search.</p>`;
-  return h;}
-function ntCard(x){const e=esc,m=x.meta,other=DMV.group==="loc"?m.chap:m.loc,ed=DMV.edit===x.src+":"+x.id;
+  if(!list.length)return h+`<p class="hint">Nothing matches.</p>`;
+  const sorted=list.sort((a,b)=>(a.meta.status==="dead")-(b.meta.status==="dead")||a.name.localeCompare(b.name));
+  // with a tag picked, one list; otherwise grouped by tag (someone with two tags shows in both)
+  if(DMV.tagf.length)return h+`<div class="ntgrid">${sorted.map(x=>ntCard(x,tags)).join("")}</div>`;
+  const groups=tags.map(t=>[t.name,sorted.filter(x=>x.meta.tags.includes(t.id))]).filter(g=>g[1].length);
+  const none=sorted.filter(x=>!x.meta.tags.some(i=>tid.has(i)));if(none.length)groups.push(["Untagged",none]);
+  return h+groups.map(([n,l])=>`<div class="ntgroup"><h3>${e(n)} <span class="small muted">${l.length}</span></h3><div class="ntgrid">${l.map(x=>ntCard(x,tags)).join("")}</div></div>`).join("");}
+function ntCard(x,tags){const e=esc,m=x.meta,key=x.src+":"+x.id,ed=DMV.edit===key,mine=tags.filter(t=>m.tags.includes(t.id));
   const chips=`<span class="ntatt a-${m.att}">${ATT[m.att]||"Neutral"}</span>${m.status!=="alive"?`<span class="ntst">${STAT[m.status]||""}</span>`:""}<span class="nttag">${x.src==="npc"?"NPC":"Creature"}</span>`;
-  const body=ed?`<div class="nted" data-ntid="${e(x.src+":"+x.id)}">
-    ${x.src==="cre"?`<label>Name<input type="text" data-ntf="name" value="${e(x.name)}"></label>`:""}
-    <label>Location<input type="text" data-ntf="loc" list="dl_loc" value="${e(m.loc)}" placeholder="e.g. Harbour district"></label>
-    <label>Chapter<input type="text" data-ntf="chap" list="dl_chap" value="${e(m.chap)}" placeholder="e.g. Chapter 2"></label>
+  const body=ed?`<div class="nted" data-ntid="${e(key)}">
+    ${x.src==="cre"?`<label class="wide">Name<input type="text" data-ntf="name" value="${e(x.name)}"></label>`:""}
+    <div class="wide"><span class="lbl">Tags</span><div class="tagpick">${tags.map(t=>tagChip(t,m.tags.includes(t.id),`data-ntg="${e(t.id)}"`)).join("")}</div></div>
     <label>Attitude<select data-ntf="att">${Object.entries(ATT).map(([k,v])=>opt(k,v,m.att===k)).join("")}</select></label>
     <label>Status<select data-ntf="status">${Object.entries(STAT).map(([k,v])=>opt(k,v,m.status===k)).join("")}</select></label>
     <label class="wide">Notes<textarea data-ntf="note" rows="2" placeholder="What the party knows, what they owe, where they were last seen…">${e(m.note)}</textarea></label>
-    <div class="ntbtns"><button type="button" class="sm" data-nt="save" data-id="${e(x.src+":"+x.id)}">Save</button><button type="button" class="ghost sm" data-nt="cancel">Cancel</button>${x.src==="cre"?`<button type="button" class="ghost sm danger-t" data-nt="del" data-id="${e(x.id)}">Delete</button>`:""}</div></div>`
-   :`${other?`<div class="small muted">${DMV.group==="loc"?"Chapter":"Location"}: ${e(other)}</div>`:""}${m.note?`<p class="ntnote">${e(m.note)}</p>`:""}
-    <div class="ntbtns"><button type="button" class="ghost sm" data-nt="sb" data-id="${e(x.src+":"+x.id)}">Stat block</button><button type="button" class="ghost sm" data-nt="edit" data-id="${e(x.src+":"+x.id)}">Edit</button><button type="button" class="ghost sm" data-nt="fight" data-id="${e(x.src+":"+x.id)}">Add to fight</button>${x.src==="npc"?`<button type="button" class="ghost sm" data-nt="open" data-id="${e(x.id)}">Open</button>`:""}</div>`;
+    <div class="ntbtns"><button type="button" class="sm" data-nt="save" data-id="${e(key)}">Save</button><button type="button" class="ghost sm" data-nt="cancel">Cancel</button>${x.src==="cre"?`<button type="button" class="ghost sm danger-t" data-nt="del" data-id="${e(x.id)}">Delete</button>`:""}</div></div>`
+   :`${mine.length?`<div class="ntags">${mine.map(t=>`<span class="tagc sm">${e(t.name)}</span>`).join("")}</div>`:""}${m.note?`<p class="ntnote">${e(m.note)}</p>`:""}
+    <div class="ntbtns"><button type="button" class="ghost sm" data-nt="sb" data-id="${e(key)}">Stat block</button><button type="button" class="ghost sm" data-nt="edit" data-id="${e(key)}">Edit</button><button type="button" class="ghost sm" data-nt="fight" data-id="${e(key)}">Add to fight</button>${x.src==="npc"?`<button type="button" class="ghost sm" data-nt="open" data-id="${e(x.id)}">Open</button>`:""}</div>`;
   return `<article class="ntcard${m.status==="dead"?" dead":""}"><div class="nth"><b>${e(x.name)}</b>${chips}</div><div class="small muted">${e(x.sub)} · AC ${x.ac} · HP ${x.hp} · CR ${e(String(x.cr))}</div>${body}</article>`;}
-function creAddHTML(){const e=esc,a=DMV.add,q=(a.q||"").trim().toLowerCase();
+function creAddHTML(tags){const e=esc,a=DMV.add,q=(a.q||"").trim().toLowerCase();
   if(a.step==="pick"){const hits=MONSTERS.filter(m=>!q||m.n.toLowerCase().includes(q)||m.t.toLowerCase().includes(q)).slice(0,q?40:24);
     return `<div class="ntadd"><div class="ntaddh"><b>Add a creature</b><button type="button" class="ghost xs" data-nt="addclose">Close</button></div>
      <input type="search" id="nt_mq" placeholder="Search the SRD monsters: wolf, goblin, dragon, beast…" value="${e(a.q||"")}" aria-label="Search monsters">
      <div class="ntpick">${hits.map(m=>`<button type="button" class="ghost" data-nt="pickmon" data-n="${e(m.n)}"><b>${e(m.n)}</b><span class="small muted">CR ${e(m.cr)} · ${e(m.sz)} ${e(m.t)}</span></button>`).join("")||'<span class="small muted">No match. Try another word, or make a custom one.</span>'}</div>
      <button type="button" class="ghost sm" data-nt="custom">Make a custom creature instead</button><p class="small muted" style="margin:.3rem 0 0">${MONSTERS.length} monsters and animals from the System Reference Document 5.2.</p></div>`;}
-  const f=a.f,base=a.base&&MON_BY[a.base],inp=(k,l,t,ph)=>`<label>${l}<input type="${t||"text"}" data-caf="${k}" value="${e(f[k]??"")}"${ph?` placeholder="${e(ph)}"`:""}${k==="loc"?' list="dl_loc"':k==="chap"?' list="dl_chap"':""}></label>`;
+  const f=a.f,base=a.base&&MON_BY[a.base],inp=(k,l,t,ph)=>`<label>${l}<input type="${t||"text"}" data-caf="${k}" value="${e(f[k]??"")}"${ph?` placeholder="${e(ph)}"`:""}></label>`;
+  f.tags=f.tags||[];
   return `<div class="ntadd"><div class="ntaddh"><b>${base?`Add: ${e(a.base)}`:"Custom creature"}</b><button type="button" class="ghost xs" data-nt="addback">Back</button></div>
    <div class="ntform">${inp("name","Name",0,base?a.base:"e.g. Old Grey")}${inp("count","How many","number")}
    ${base?"":`${inp("sz","Size",0,"Medium")}${inp("t","Type",0,"beast, monstrosity…")}${inp("ac","AC","number")}${inp("hp","HP","number")}${inp("sp","Speed",0,"30 ft.")}${inp("cr","CR",0,"1/2")}
    ${["str","dex","con","int","wis","cha"].map(k=>inp(k,k.toUpperCase(),"number","10")).join("")}
    <label class="wide">Traits and actions <span class="small muted">(one per line, like "Bite: +4 to hit, 1d6+2 piercing")</span><textarea data-caf="acts" rows="3">${e(f.acts||"")}</textarea></label>`}
-   ${inp("loc","Location",0,"e.g. Old mill")}${inp("chap","Chapter",0,"e.g. Chapter 1")}
+   <div class="wide"><span class="lbl">Tags</span><div class="tagpick">${tags.map(t=>tagChip(t,f.tags.includes(t.id),`data-cat="${e(t.id)}"`)).join("")}</div></div>
    <label>Attitude<select data-caf="att">${Object.entries(ATT).map(([k,v])=>opt(k,v,(f.att||"hostile")===k)).join("")}</select></label>
    <label class="wide">Notes<textarea data-caf="note" rows="2">${e(f.note||"")}</textarea></label></div>
    <div class="ntbtns"><button type="button" class="sm" data-nt="addsave">Add to campaign</button></div></div>`;}
@@ -3839,16 +3865,17 @@ function creSave(camp){const a=DMV.add,f=a.f,n=Math.max(1,Math.min(20,parseInt(f
   let block=null;if(!a.base){const num=(v,d)=>{const x=parseInt(v);return isFinite(x)?x:d;};
     block={n:nm,sz:f.sz||"Medium",t:f.t||"creature",ac:num(f.ac,10),hp:num(f.hp,1),sp:f.sp||"30 ft.",cr:f.cr||"0",ab:["str","dex","con","int","wis","cha"].map(k=>num(f[k],10)),
       act:(f.acts||"").split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.search(/[:.]\s/);return i>0&&i<40?[l.slice(0,i),l.slice(i+1).trim()]:["",l];})};}
-  const meta={...NPCMETA0(),loc:(f.loc||"").trim(),chap:(f.chap||"").trim(),att:f.att||"hostile",note:(f.note||"").trim()};
+  const meta={...NPCMETA0(),tags:[...(f.tags||[])],att:f.att||"hostile",note:(f.note||"").trim()};
   const writes=[];for(let i=1;i<=n;i++)writes.push(RS.creCol.doc().set({name:n>1?`${nm} ${i}`:nm,campaign:camp,base:a.base||"",block,meta,updated:new Date().toISOString()}));
   return Promise.all(writes);}
 async function ntSaveMeta(key,vals){const [src,id]=[key.slice(0,3),key.slice(4)];
-  if(src==="cre"){const c=(RS.cres||[]).find(x=>x.id===id);if(!c)return;const meta={...NPCMETA0(),...(c.meta||{}),...vals};delete meta.name;
-    try{await RS.creCol.doc(id).set({name:(vals.name||c.name||"").trim()||c.name,campaign:c.campaign||"",base:c.base||"",block:c.block||null,meta,updated:new Date().toISOString()});}catch(e){writeErr(e);}return;}
+  if(src==="cre"){const c=(RS.cres||[]).find(x=>x.id===id);if(!c)return;const meta={...NPCMETA0(),...(c.meta||{}),...vals};delete meta.name;c.meta=meta;if(vals.name)c.name=vals.name.trim()||c.name;
+    try{await RS.creCol.doc(id).set({name:c.name,campaign:c.campaign||"",base:c.base||"",block:c.block||null,meta,updated:new Date().toISOString()});}catch(e){writeErr(e);}return;}
   const meta={...NPCMETA0(),...vals};delete meta.name;
   if(id===RS.curId){S.npcMeta=meta;save();rosterChanged();renderDM();return;}
   const ch=RS.chars.find(c=>c.id===id);if(!ch)return;const st={...(ch.state||{}),npcMeta:meta};ch.state=st;
   try{await RS.charCol.doc(id).set({name:ch.name,kind:ch.kind||"npc",campaign:ch.campaign||"",summary:ch.summary||"",state:st,updated:new Date().toISOString()});}catch(e){writeErr(e);}}
+
 function creatureDoc(b){const e=esc,md=v=>Math.floor((v-10)/2),ab=b.ab||[10,10,10,10,10,10],A=["Str","Dex","Con","Int","Wis","Cha"];
   const row=i=>`<tr><th>${A[i]}</th><td>${ab[i]}</td><td>${fmt(md(ab[i]))}</td></tr>`,tbl=ix=>`<table class="abt"><tr><th></th><th></th><th>Mod</th></tr>${ix.map(row).join("")}</table>`;
   const line=(k,v)=>v?`<p><b>${k}</b> ${e(v)}</p>`:"",sec=(t,l)=>l&&l.length?`<h3>${t}</h3>${l.map(([n,d])=>`<p>${n?`<b><i>${e(n)}.</i></b> `:""}${e(d)}</p>`).join("")}`:"";
@@ -3862,16 +3889,22 @@ function creatureDoc(b){const e=esc,md=v=>Math.floor((v-10)/2),ab=b.ab||[10,10,1
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${SHEET_CSS}${NPC_CSS}</style></head><body><div class="page">${body}</div></body></html>`;}
 function showStatBlock(html,title){$("sb_title").textContent=title||"Stat block";const d=$("sbview");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");$("sb_frame").srcdoc=html;}
 function ntClick(b,camp){const d=b.dataset,k=d.nt;
+  if(k==="tagclear"){DMV.tagf=[];renderDM();return;}
+  if(k==="tagmanage"){DMV.tagEdit=campTags(camp).map(t=>({...t}));renderDM();return;}
+  if(k==="tagadd"){DMV.tagEdit.push({id:newTagId(),name:`Group ${DMV.tagEdit.length+1}`});renderDM();setTimeout(()=>{const l=[...document.querySelectorAll("[data-tagname]")].pop();if(l){l.focus();l.select();}},0);return;}
+  if(k==="tagdel"){DMV.tagEdit.splice(+d.i,1);renderDM();return;}
+  if(k==="tagcancel"){DMV.tagEdit=null;renderDM();return;}
+  if(k==="tagsave"){const t=DMV.tagEdit.map(x=>({id:x.id,name:(x.name||"").trim()||"Untitled"}));DMV.tagEdit=null;saveCampTags(camp,t);return;}
   if(k==="addcre"){DMV.add={step:"pick",q:""};renderDM();setTimeout(()=>{const i=$("nt_mq");if(i)i.focus();},0);return;}
   if(k==="addclose"){DMV.add=null;renderDM();return;}
-  if(k==="pickmon"){DMV.add={step:"form",base:d.n,f:{name:d.n,count:"1",att:"hostile",loc:"",chap:"",note:""}};renderDM();return;}
-  if(k==="custom"){DMV.add={step:"form",base:"",f:{name:"",count:"1",att:"hostile"}};renderDM();return;}
+  if(k==="pickmon"){DMV.add={step:"form",base:d.n,f:{name:d.n,count:"1",att:"hostile",tags:[...DMV.tagf.filter(x=>x!=="_none")],note:""}};renderDM();return;}
+  if(k==="custom"){DMV.add={step:"form",base:"",f:{name:"",count:"1",att:"hostile",tags:[...DMV.tagf.filter(x=>x!=="_none")]}};renderDM();return;}
   if(k==="addback"){DMV.add={step:"pick",q:""};renderDM();return;}
   if(k==="addsave"){creSave(camp).then(()=>{DMV.msg=`Added to ${esc(campName(camp)||"No campaign")}.`;DMV.add=null;renderDM();}).catch(writeErr);return;}
   if(k==="newnpc"){closeDM();newChar();S.kind="npc";S.mode="npc";S.campaign=camp;syncStatic();renderAll();renderRosterBar();rsStatus("New NPC for this campaign. Build it, then press Save to roster.");if(typeof MB!=="undefined"&&MB.on)mTab("build");return;}
   if(k==="edit"){DMV.edit=d.id;renderDM();return;}
   if(k==="cancel"){DMV.edit="";renderDM();return;}
-  if(k==="save"){const box=b.closest(".nted"),vals={};box.querySelectorAll("[data-ntf]").forEach(el=>vals[el.dataset.ntf]=el.value);DMV.edit="";ntSaveMeta(d.id,vals).then(renderDM);return;}
+  if(k==="save"){const box=b.closest(".nted"),vals={};box.querySelectorAll("[data-ntf]").forEach(el=>vals[el.dataset.ntf]=el.value);vals.tags=[...box.querySelectorAll("[data-ntg].on")].map(x=>x.dataset.ntg);DMV.edit="";ntSaveMeta(d.id,vals).then(renderDM);return;}
   if(k==="del"){const c=(RS.cres||[]).find(x=>x.id===d.id);if(!c||!confirm(`Delete ${c.name}?`))return;DMV.edit="";RS.creCol.doc(d.id).delete().catch(writeErr);return;}
   if(k==="open"){closeDM();openChar(d.id);return;}
   const [src,id]=[d.id.slice(0,3),d.id.slice(4)];
@@ -3937,6 +3970,9 @@ function closeDM(){document.body.classList.remove("dmmode");$("dmv").hidden=true
 $("dm_btn").addEventListener("click",()=>{const open=document.body.classList.contains("dmmode");if(typeof MB!=="undefined"&&MB.on){mTab(open?"build":"dm");return;}open?closeDM():openDM();});
 $("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.fx){fightClick(b,dmModels());return;}
   if(b.dataset.dmtab){DMV.tab=b.dataset.dmtab;DMV.msg="";try{localStorage.setItem("ledger_dmtab",DMV.tab);}catch(x){}renderDM();return;}
+  if(b.dataset.ntfTag){const t=b.dataset.ntfTag;DMV.tagf=DMV.tagf.includes(t)?DMV.tagf.filter(x=>x!==t):[...DMV.tagf,t];renderDM();return;}
+  if(b.dataset.ntg){b.classList.toggle("on");b.setAttribute("aria-pressed",String(b.classList.contains("on")));return;}
+  if(b.dataset.cat&&DMV.add&&DMV.add.f){const t=b.dataset.cat,l=DMV.add.f.tags||[];DMV.add.f.tags=l.includes(t)?l.filter(x=>x!==t):[...l,t];b.classList.toggle("on");return;}
   if(b.dataset.nt){DMV.msg="";ntClick(b,DMV.camp??(S.campaign||""));return;}const d=b.dataset,id=d.id;
   if(b.id==="dm_close"){closeDM();return;}
   if(d.dm==="addfile"){DMV.msg="";DMV.pend=null;$("dm_import").click();return;}
@@ -3954,13 +3990,13 @@ $("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   else if(d.dm==="partysr"||d.dm==="partylr"){if(!confirm(`${d.dm==="partylr"?"Long":"Short"} rest for everyone shown?`))return;party().forEach(pid=>dmUpdate(pid,(t,s)=>d.dm==="partylr"?playLongRest(s,t):playShortRest(s,t)));}});
 $("dmv").addEventListener("change",e=>{const t=e.target;
   if(fightChange(t,dmModels()))return;
-  if(t.name==="nt_group"){DMV.group=t.value;try{localStorage.setItem("ledger_dmgroup",t.value);}catch(x){}renderDM();return;}
   if(t.dataset&&t.dataset.caf!==undefined&&DMV.add&&DMV.add.f){DMV.add.f[t.dataset.caf]=t.value;return;}
   if(t.id==="dm_camp"){DMV.camp=t.value;try{localStorage.setItem("ledger_dmcamp",t.value);}catch(x){}renderDM();}
   else if(t.id==="dm_npc"){DMV.npcs=t.checked;try{localStorage.setItem("ledger_dmnpc",t.checked?"1":"0");}catch(x){}renderDM();}
   else if(t.dataset.dm==="addcond"&&t.value)dmUpdate(t.dataset.id,x=>{x.cond=[...(x.cond||[]),t.value];});});
 $("dmv").addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.mf!==undefined)DMV.mf[t.dataset.mf]=t.value;
   if(t.dataset&&t.dataset.caf!==undefined&&DMV.add&&DMV.add.f)DMV.add.f[t.dataset.caf]=t.value;
+  if(t.dataset&&t.dataset.tagname!==undefined&&DMV.tagEdit)DMV.tagEdit[+t.dataset.tagname].name=t.value;
   if(t.id==="nt_q"){DMV.q=t.value;renderDM();}if(t.id==="nt_mq"&&DMV.add){DMV.add.q=t.value;renderDM();}});
 $("dmv").addEventListener("keydown",e=>{const t=e.target;if(e.key==="Enter"&&t.dataset&&t.dataset.famt){e.preventDefault();const b=$("dmv").querySelector(`[data-fx="dmg"][data-f="${CSS.escape(t.dataset.famt)}"]`);if(b)b.click();return;}if(e.key==="Enter"&&t.dataset&&t.dataset.mf!==undefined){e.preventDefault();const b=$("dmv").querySelector('[data-fx="addmon"]');if(b)b.click();return;}if(e.key==="Enter"&&t.dataset&&t.dataset.amt){e.preventDefault();const b=$("dmv").querySelector(`[data-dm="dmg"][data-id="${CSS.escape(t.dataset.amt)}"]`);if(b)b.click();}});
 document.addEventListener("toggle",e=>{if(e.target.dataset&&e.target.dataset.dmn)DMV.open[e.target.dataset.dmn]=e.target.open;},true);
@@ -4008,7 +4044,7 @@ async function initRoster(){
   RS.campCol=base.collection("campaigns");RS.charCol=base.collection("characters");RS.creCol=base.collection("creatures");
   RS.creCol.onSnapshot(sn=>{RS.cres=sn.docs.map(d=>({id:d.id,...d.data()}));RS.cresLoaded=true;if(typeof renderDM==="function")renderDM();},rosterErr);
   try{const last=localStorage.getItem("ledger_cur");if(last)RS.curId=last;}catch(e){}
-  RS.campCol.onSnapshot(sn=>{RS.camps=sn.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.name||"").localeCompare(b.name||""));RS.campsLoaded=true;renderRoster();},rosterErr);
+  RS.campCol.onSnapshot(sn=>{RS.camps=sn.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.name||"").localeCompare(b.name||""));RS.campsLoaded=true;renderRoster();if(typeof renderDM==="function")renderDM();},rosterErr);
   RS.charCol.onSnapshot(sn=>{RS.chars=sn.docs.map(d=>({id:d.id,...d.data()}));RS.charsLoaded=true;
     if(RS.curId&&!RS.chars.find(c=>c.id===RS.curId)){RS.curId=null;try{localStorage.removeItem("ledger_cur");}catch(e){}}
     if(RS.curId&&!RS.lastKey){const cur=RS.chars.find(c=>c.id===RS.curId);if(cur)RS.lastKey=keyOf({name:cur.name,kind:cur.kind,campaign:cur.campaign,summary:cur.summary,state:cur.state});}
