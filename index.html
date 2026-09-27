@@ -257,6 +257,45 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
 .thmode button{flex:1;background:transparent;color:var(--ink-soft);border:0;border-radius:0;padding:.4rem .3rem;font-size:.82rem;font-weight:500}
 .thmode button+button{border-left:1px solid var(--line)}
 .thmode button[aria-pressed="true"]{background:var(--bronze);color:var(--on-accent)}
+/* ---------- phone and small-tablet layout (JS adds body.compact under 960px) ---------- */
+#msteps,#mnav,#mtabs,#m_menu{display:none}
+body.compact header{padding:.75rem 16px .55rem}
+body.compact header h1{font-size:1.3rem}
+body.compact header p{display:none}
+body.compact .rbar .inner{padding:.5rem 16px;gap:.4rem .6rem;flex-wrap:nowrap}
+body.compact .rb-cur{min-width:0}
+body.compact #cur_name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.compact #m_menu{display:inline-block;flex:none}
+body.compact .rb-cur{flex:1;order:1}body.compact #m_menu{order:2}body.compact .rb-actions{order:3}
+body.compact .rbar .inner{flex-wrap:wrap}
+body.compact .rb-actions{display:none}
+body.compact.mmenu .rb-actions{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;width:100%;padding:.3rem 0 .2rem}
+body.compact.mmenu .rb-actions>*{width:100%;margin:0}
+body.compact #dm_btn,body.compact #play_btn{display:none}
+body.compact{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))}
+body.compact .grid{margin-top:.8rem}
+body.compact .preview{position:static}
+body.compact.t-build .preview{display:none}
+body.compact:not(.t-build) #f,body.compact:not(.t-build) #mnav,body.compact:not(.t-build) #msteps{display:none!important}
+body.compact.t-build #f>fieldset:not(.mon){display:none}
+body.compact.dmmode #msteps{display:none!important}
+body.compact.t-build #msteps{display:flex}
+#msteps{position:sticky;top:0;z-index:20;gap:.35rem;overflow-x:auto;scrollbar-width:none;padding:.55rem 16px;margin:0 -16px;background:var(--parchment);border-bottom:1px solid var(--line)}
+#msteps::-webkit-scrollbar{display:none}
+#msteps button{flex:none;display:flex;align-items:center;gap:.3rem;background:var(--panel);color:var(--ink-soft);border:1px solid var(--line);border-radius:99px;padding:.3rem .7rem .3rem .35rem;font-size:.8rem;font-weight:500}
+#msteps button .n{display:inline-block;width:1.3rem;height:1.3rem;line-height:1.3rem;border-radius:50%;text-align:center;background:var(--parchment-dim);color:var(--ink);font-size:.72rem;font-weight:600}
+#msteps button.done .n{background:var(--teal);color:var(--on-teal)}
+#msteps button[aria-current="step"]{border-color:var(--legend);color:var(--ink);box-shadow:inset 0 0 0 1px var(--legend)}
+#msteps button[aria-current="step"] .n{background:var(--legend);color:var(--panel)}
+body.compact.t-build #mnav{display:flex;align-items:center;gap:.6rem;justify-content:space-between;margin:-.2rem 0 1rem}
+#mnav span{font-size:.8rem;color:var(--ink-soft)}
+#mnav button{min-width:6.5rem}
+body.compact #mtabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);padding:0 0 env(safe-area-inset-bottom,0px);box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+#mtabs button{flex:1;background:transparent;color:var(--ink-soft);border:0;border-radius:0;padding:.45rem .2rem .5rem;font-size:.72rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+#mtabs button .i{font-size:1.15rem;line-height:1.2}
+#mtabs button[aria-selected="true"]{color:var(--legend);box-shadow:inset 0 3px 0 var(--legend)}
+body.compact #dmv{padding-top:.4rem}
+body.compact #dm_close{display:none}
 </style>
 <script>try{var T=JSON.parse(localStorage.getItem("ledger_theme")||"{}");if(T.p)document.documentElement.setAttribute("data-palette",T.p);if(T.m==="light"||T.m==="dark")document.documentElement.setAttribute("data-theme",T.m);}catch(e){}</script>
 </head>
@@ -271,8 +310,9 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
 </div></header>
 <section class="rbar" aria-label="Your characters">
   <div class="inner">
+    <button type="button" class="ghost sm" id="m_menu" aria-expanded="false" aria-controls="rb_actions">☰ Menu</button>
     <div class="rb-cur"><span class="k">Now editing</span><strong id="cur_name">New character</strong><span class="m" id="cur_meta"></span></div>
-    <div class="rb-actions">
+    <div class="rb-actions" id="rb_actions">
       <label class="sr dmonly" for="r_kind">Character type</label>
       <select id="r_kind" class="dmonly ononly"><option value="pc">Player character</option><option value="npc">NPC</option></select>
       <label class="sr" for="r_camp">Campaign</label>
@@ -308,7 +348,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
 
 <section id="dmv" class="wrap" hidden aria-label="DM view"></section>
 <input type="file" id="dm_import" accept=".json,application/json" hidden>
-<div class="wrap"><div class="grid">
+<div class="wrap"><nav id="msteps" aria-label="Steps"></nav><div class="grid">
 <form id="f" autocomplete="off" onsubmit="return false">
 
 <fieldset>
@@ -465,6 +505,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
   <p class="hint">All optional. <span class="dmonly">Whatever you fill in appears on both sheets.</span><span class="plonly">Whatever you fill in appears on your character sheet.</span></p>
 </fieldset>
 </form>
+<div id="mnav"><button type="button" class="ghost" id="m_prev">‹ Back</button><span id="m_pos"></span><button type="button" id="m_next">Next ›</button></div>
 
 <aside class="preview" aria-label="Character sheet preview">
   <div class="pbar">
@@ -508,6 +549,7 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>🎲 Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
+<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build"><span class="i" aria-hidden="true">✎</span>Build</button><button type="button" role="tab" data-tab="sheet"><span class="i" aria-hidden="true">▤</span>Sheet</button><button type="button" role="tab" data-tab="play"><span class="i" aria-hidden="true">⚔</span>Play</button><button type="button" role="tab" data-tab="dm" class="dmonly"><span class="i" aria-hidden="true">♜</span>DM</button></nav>
 <div class="viewsw" id="viewsw"><span>Showing: <span class="vtag" id="view_tag">Player view</span></span><button type="button" class="ghost sm" id="view_btn" aria-pressed="false">Show DM tools</button><span class="small" id="view_note"></span></div>
 <footer style="max-width:1240px;margin:0 auto;padding:0 16px 2rem;font-size:.74rem;color:var(--ink-soft)">Rules text and spells are from the System Reference Document 5.2 by Wizards of the Coast LLC (dndbeyond.com/srd), licensed CC BY 4.0. Spell data compiled by the 5e-bits/5e-database project (MIT licence).</footer>
 
@@ -3606,7 +3648,7 @@ async function dmImportWrite(update){const p=DMV.pend;DMV.pend=null;if(!p||!RS.d
   catch(err){writeErr(err);DMV.msg="Couldn't save that character just now. Try again in a moment.";}
   renderDM();}
 function openDM(){document.body.classList.add("dmmode");$("dmv").hidden=false;$("dm_btn").setAttribute("aria-pressed","true");renderDM();window.scrollTo({top:0});}
-function closeDM(){document.body.classList.remove("dmmode");$("dmv").hidden=true;$("dm_btn").setAttribute("aria-pressed","false");schedulePreview(true);}
+function closeDM(){document.body.classList.remove("dmmode");$("dmv").hidden=true;$("dm_btn").setAttribute("aria-pressed","false");schedulePreview(true);if(typeof MB!=="undefined"&&MB.on&&MB.tab==="dm")mTab("build",true);}
 $("dm_btn").addEventListener("click",()=>document.body.classList.contains("dmmode")?closeDM():openDM());
 $("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset,id=d.id;
   if(b.id==="dm_close"){closeDM();return;}
@@ -3639,9 +3681,10 @@ $("lvlup").addEventListener("change",e=>{if(e.target.dataset.lvcls!==undefined){
 $("lvlup").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   if(b.id==="lv_done"||b.id==="lv_x"){closeLevelUp();return;}
   if(b.id==="lv_undo"){const e=lvEntry(),key=e.primary?e.level:`${e.cls}:${e.level}`;if(S.hpRolls)delete S.hpRolls[key];if(LV.from)lvRestore(LV.from);else S.level=Math.max(1,S.level-1);$("level").value=String(S.level);renderAll();closeLevelUp();return;}
-  if(b.dataset.jump){closeLevelUp();const el=$(b.dataset.jump);if(el){el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");}}});
+  if(b.dataset.jump){closeLevelUp();const el=$(b.dataset.jump);if(el){mReveal(el);el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");}}});
 $("lvlup").addEventListener("close",()=>schedulePreview(true));
-$("play_btn").addEventListener("click",()=>{const on=!document.body.classList.contains("playing");document.body.classList.toggle("playing",on);$("play_btn").setAttribute("aria-pressed",String(on));$("play_btn").textContent=on?"Back to builder":"Play mode";if(S.mode!=="pc"){S.mode="pc";document.querySelector('input[name=mode][value="pc"]').checked=true;syncTips();}schedulePreview(true);window.scrollTo({top:0});});
+function setPlay(on){document.body.classList.toggle("playing",on);$("play_btn").setAttribute("aria-pressed",String(on));$("play_btn").textContent=on?"Back to builder":"Play mode";if(on&&S.mode!=="pc"){S.mode="pc";document.querySelector('input[name=mode][value="pc"]').checked=true;syncTips();}schedulePreview(true);}
+$("play_btn").addEventListener("click",()=>{setPlay(!document.body.classList.contains("playing"));window.scrollTo({top:0});});
 
 /* ================= ROSTER (saved characters, organised by campaign) =================
    Stored in the page's database under each viewer's private area:
@@ -3720,6 +3763,7 @@ function openChar(id){
   try{localStorage.setItem("ledger_cur",id);}catch(e){}
   syncStatic();renderAll();
   rsStatus(`Opened ${esc(ch.name)}.`);
+  if(MB.on){mTab("build");mGo(0);}
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function newChar(){
@@ -3881,6 +3925,53 @@ $("r_import").addEventListener("change",async e=>{
   }catch(err){rsStatus("That file isn't a Character Ledger character file.");}
 });
 
+/* ================= PHONE LAYOUT =================
+   Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
+const MB={on:false,tab:"build",step:0,mq:window.matchMedia("(max-width: 959px)")};
+try{const t=localStorage.getItem("ledger_mtab");if(["build","sheet","play"].includes(t))MB.tab=t;}catch(e){}
+const M_SHORT={1:"Class",2:"Species",3:"Background",4:"Scores",5:"Skills",6:"Spells",7:"Gear",8:"Details"};
+function mSteps(){return [...document.querySelectorAll("#f > fieldset")].filter(f=>!f.hidden);}
+function mNum(fs){const n=fs.querySelector("legend .n");return n?+n.textContent:0;}
+function mDone(n){try{
+  if(n===1)return !(S.level>=3&&!S.sub)&&!(S.mc||[]).some(m=>m.level>=3&&!m.sub);
+  if(n===2){const sp=SPECIES[S.sp];return !(sp&&sp.choice&&!S.spChoice);}
+  if(n===3)return langPicks().every(p=>p.v);
+  if(n===5){const sk=skillSets();return sk.nClass-sk.classPick.length+sk.extraN-sk.extra.length+sk.mcGroups.reduce((a,g)=>a+g.n-g.picks.length,0)<=0;}
+  if(n===6){const pl=spellPlan();return pl.groups.filter(g=>g.n!=null&&g.from.length&&!g.book).every(g=>chosen(g.key).filter(x=>g.from.some(s=>s.n===x)).length>=Math.min(g.n,g.from.length));}
+  if(n===8)return !!S.name;
+  return true;}catch(e){return false;}}
+function mRefresh(){if(!MB.on)return;const st=mSteps();if(MB.step>=st.length)MB.step=st.length-1;
+  st.forEach((f,i)=>f.classList.toggle("mon",i===MB.step));
+  document.querySelectorAll("#f > fieldset[hidden]").forEach(f=>f.classList.remove("mon"));
+  $("msteps").innerHTML=st.map((f,i)=>{const n=mNum(f),d=mDone(n);return `<button type="button" data-mstep="${i}"${i===MB.step?' aria-current="step"':""} class="${d?"done":""}" aria-label="Step ${n}: ${esc(f.querySelector("legend").textContent.replace(/^\d+/,""))}${d?" (done)":""}"><span class="n">${d?"✓":n}</span>${M_SHORT[n]||""}</button>`;}).join("");
+  const cur=$("msteps").querySelector('[aria-current="step"]');if(cur){const box=$("msteps");const want=cur.offsetLeft-box.clientWidth/2+cur.offsetWidth/2;box.scrollLeft=Math.max(0,want);}
+  $("m_pos").textContent=`Step ${MB.step+1} of ${st.length}`;$("m_prev").disabled=MB.step===0;
+  $("m_next").textContent=MB.step===st.length-1?"See the sheet ›":"Next ›";}
+function mGo(i,scroll){MB.step=Math.max(0,i);mRefresh();if(scroll!==false){const top=$("msteps").getBoundingClientRect().top+window.scrollY;if(window.scrollY>top)window.scrollTo({top});}}
+function mTab(t,fromDM){if(!MB.on)return;if(t==="dm"&&isPlayerView())t="build";
+  if(t!=="dm"&&!fromDM&&document.body.classList.contains("dmmode"))closeDM();
+  MB.tab=t;["build","sheet","play","dm"].forEach(k=>document.body.classList.toggle("t-"+k,k===t||(k==="sheet"&&t==="play")));
+  document.body.classList.toggle("t-build",t==="build");
+  if(t==="dm"){if(!document.body.classList.contains("dmmode"))openDM();}
+  if((t==="play")!==document.body.classList.contains("playing"))setPlay(t==="play");
+  document.querySelectorAll("#mtabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
+  if(t!=="dm")try{localStorage.setItem("ledger_mtab",t);}catch(e){}
+  document.body.classList.remove("mmenu");$("m_menu").setAttribute("aria-expanded","false");
+  if(t==="build")mRefresh();else schedulePreview(true);window.scrollTo({top:0});}
+function mReveal(el){if(!MB.on)return;const fs=el.closest&&el.closest("#f > fieldset");if(!fs)return;const i=mSteps().indexOf(fs);if(i<0)return;if(MB.tab!=="build")mTab("build");MB.step=i;mRefresh();}
+function mApply(){const on=MB.mq.matches;if(on===MB.on)return;MB.on=on;document.body.classList.toggle("compact",on);
+  if(on){mTab(document.body.classList.contains("dmmode")?"dm":document.body.classList.contains("playing")?"play":MB.tab,true);}else{["t-build","t-sheet","t-play","t-dm","mmenu"].forEach(c=>document.body.classList.remove(c));document.querySelectorAll("#f > fieldset").forEach(f=>f.classList.remove("mon"));schedulePreview(true);}}
+(MB.mq.addEventListener?MB.mq.addEventListener("change",mApply):MB.mq.addListener(mApply));
+$("msteps").addEventListener("click",e=>{const b=e.target.closest("[data-mstep]");if(b)mGo(+b.dataset.mstep);});
+$("m_prev").addEventListener("click",()=>mGo(MB.step-1));
+let mT=0;$("f").addEventListener("input",()=>{if(!MB.on)return;clearTimeout(mT);mT=setTimeout(mRefresh,300);});
+$("m_next").addEventListener("click",()=>{if(MB.step>=mSteps().length-1)mTab("sheet");else mGo(MB.step+1);});
+$("mtabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)mTab(b.dataset.tab);});
+$("m_menu").addEventListener("click",e=>{e.stopPropagation();const on=!document.body.classList.contains("mmenu");document.body.classList.toggle("mmenu",on);$("m_menu").setAttribute("aria-expanded",String(on));});
+$("rb_actions").addEventListener("click",e=>{if(MB.on&&e.target.closest("button"))setTimeout(()=>{document.body.classList.remove("mmenu");$("m_menu").setAttribute("aria-expanded","false");},0);});
+$("qb").addEventListener("click",e=>{if(MB.on&&e.target.closest("#qb_finish"))mTab("sheet");});
+{const _ra=renderAll;renderAll=function(){_ra();mRefresh();};const _nc=newChar;newChar=function(){_nc();if(MB.on){MB.step=0;mTab("build");}};}
+
 /* ================= THEME ================= */
 const THEMES={"parchment":{"n":"Parchment","d":"Aged paper and bronze","L":{"parchment":"#efe7d4","parchment-dim":"#e4dac2","panel":"#f7f2e5","ink":"#1c2420","ink-soft":"#4a554e","line":"#c9bd9d","bronze":"#8f6128","bronze-deep":"#6e4a1d","on-accent":"#fff8ea","teal":"#3e5c55","on-teal":"#fff8ea","teal-ink":"#3e5c55","legend":"#6e4a1d","warn":"#8b3a3a","ok":"#4b7a4f","amber":"#c08a2a","amber-ink":"#85590c"},"D":{"parchment":"#171a16","parchment-dim":"#23281f","panel":"#1d211a","ink":"#e7e0cc","ink-soft":"#b3ab96","line":"#3d4337","bronze":"#93632a","bronze-deep":"#7a5220","on-accent":"#fff8ea","teal":"#3e5c55","on-teal":"#fff8ea","teal-ink":"#8fbfb3","legend":"#d19a57","warn":"#e08a7a","ok":"#8cc594","amber":"#d4a03a","amber-ink":"#e0b04a"}},"arcane":{"n":"Arcane","d":"Spellbook violet","L":{"parchment":"#ece8f3","parchment-dim":"#e0dbeb","panel":"#f7f5fb","ink":"#1f1a2b","ink-soft":"#4f4863","line":"#c8c0da","bronze":"#5b3f99","bronze-deep":"#45307a","on-accent":"#faf7ff","teal":"#2a6570","on-teal":"#ffffff","teal-ink":"#2a6570","legend":"#4a3385","warn":"#9b2f4a","ok":"#3f7a52","amber":"#b9861f","amber-ink":"#7d5a0c"},"D":{"parchment":"#16131e","parchment-dim":"#221d2e","panel":"#1c1826","ink":"#e8e3f3","ink-soft":"#b0a8c4","line":"#3a3350","bronze":"#7a5cc4","bronze-deep":"#6247ab","on-accent":"#ffffff","teal":"#2f6f7a","on-teal":"#ffffff","teal-ink":"#7fc4cc","legend":"#b9a2f0","warn":"#f08aa0","ok":"#86c795","amber":"#d9a63f","amber-ink":"#e5b857"}},"verdant":{"n":"Verdant","d":"Forest and oak","L":{"parchment":"#e7ede2","parchment-dim":"#dbe3d4","panel":"#f4f7f1","ink":"#18241b","ink-soft":"#465549","line":"#bccbb6","bronze":"#3f6b3a","bronze-deep":"#2f5230","on-accent":"#f6fbf2","teal":"#6b4f2a","on-teal":"#fffaf2","teal-ink":"#6b4f2a","legend":"#2f5a33","warn":"#9a3b2e","ok":"#3f6b3a","amber":"#b58420","amber-ink":"#795609"},"D":{"parchment":"#121813","parchment-dim":"#1d251d","panel":"#172019","ink":"#e1eadc","ink-soft":"#a9b8a4","line":"#34422f","bronze":"#4a7a43","bronze-deep":"#3c6636","on-accent":"#ffffff","teal":"#7a5a30","on-teal":"#ffffff","teal-ink":"#d4b27a","legend":"#9fcf8f","warn":"#f09080","ok":"#9fcf8f","amber":"#d6a53d","amber-ink":"#e3b85a"}},"frost":{"n":"Frost","d":"Glacier blue and slate","L":{"parchment":"#e6edf2","parchment-dim":"#d9e3ea","panel":"#f4f8fb","ink":"#172430","ink-soft":"#465767","line":"#b8c8d6","bronze":"#2f5f8a","bronze-deep":"#234a6d","on-accent":"#f5faff","teal":"#2f5f5f","on-teal":"#ffffff","teal-ink":"#2f5f5f","legend":"#244f78","warn":"#9a3542","ok":"#3d7456","amber":"#b3811d","amber-ink":"#78560a"},"D":{"parchment":"#10161c","parchment-dim":"#1a232c","panel":"#151d25","ink":"#e1e9f0","ink-soft":"#a6b5c3","line":"#2f3c49","bronze":"#3a70a3","bronze-deep":"#2f5f8a","on-accent":"#ffffff","teal":"#336060","on-teal":"#ffffff","teal-ink":"#8ccaca","legend":"#8fbfe8","warn":"#f08c98","ok":"#8bcaa3","amber":"#d8a441","amber-ink":"#e6b95b"}},"ember":{"n":"Ember","d":"Infernal crimson","L":{"parchment":"#f1e6e1","parchment-dim":"#e7d8d1","panel":"#faf3f0","ink":"#2a1a17","ink-soft":"#5c4540","line":"#d6bfb6","bronze":"#9a3222","bronze-deep":"#7a2619","on-accent":"#fff6f2","teal":"#474c56","on-teal":"#ffffff","teal-ink":"#3f4550","legend":"#862a1c","warn":"#8a2346","ok":"#4b7a4f","amber":"#b67a17","amber-ink":"#7a5009"},"D":{"parchment":"#1a1311","parchment-dim":"#271c19","panel":"#211815","ink":"#f0e2dc","ink-soft":"#bfa79f","line":"#45332e","bronze":"#bf4a33","bronze-deep":"#a33d28","on-accent":"#ffffff","teal":"#4a4f5a","on-teal":"#ffffff","teal-ink":"#b3bccb","legend":"#f0946f","warn":"#f28aa8","ok":"#8cc494","amber":"#dba244","amber-ink":"#e8b65e"}},"dungeon":{"n":"Dungeon","d":"Cold stone and gold","L":{"parchment":"#e9e9e6","parchment-dim":"#dddcd8","panel":"#f6f6f4","ink":"#1e1f22","ink-soft":"#4d5057","line":"#c4c4bf","bronze":"#6f5b1c","bronze-deep":"#574714","on-accent":"#fffbea","teal":"#3e5a6e","on-teal":"#ffffff","teal-ink":"#35505f","legend":"#5c4d1a","warn":"#963838","ok":"#45744b","amber":"#b8861e","amber-ink":"#7a590c"},"D":{"parchment":"#141517","parchment-dim":"#202226","panel":"#1a1c1f","ink":"#e6e6e3","ink-soft":"#aeb0b5","line":"#373a40","bronze":"#c9a54a","bronze-deep":"#b08f38","on-accent":"#17150f","teal":"#7fa6c0","on-teal":"#101418","teal-ink":"#7fa6c0","legend":"#d6b75e","warn":"#f08a8a","ok":"#8cc594","amber":"#d4a03a","amber-ink":"#e0b04a"}}};
 function themeGet(){try{return JSON.parse(localStorage.getItem("ledger_theme")||"{}");}catch(e){return {};}}
@@ -3906,7 +3997,7 @@ function setView(v,persist){const p=v!=="dm";document.body.classList.toggle("pvi
   $("view_tag").textContent=p?"Player view":"DM view";$("view_btn").textContent=p?"Show DM tools":"Switch to player view";$("view_btn").setAttribute("aria-pressed",String(!p));
   $("view_note").textContent=p?"":"NPC stat blocks, challenge rating and the DM party view are showing.";
   if(persist){VIEW_SAVED=p?"player":"dm";try{localStorage.setItem("ledger_view",VIEW_SAVED);}catch(e){}}
-  syncTips();renderRosterBar();schedulePreview(true);}
+  syncTips();renderRosterBar();schedulePreview(true);if(MB.on&&p&&MB.tab==="dm")mTab("build");}
 $("view_btn").addEventListener("click",()=>setView(isPlayerView()?"dm":"player",true));
 
 /* ================= START ================= */
@@ -3916,6 +4007,7 @@ syncStatic();
 renderAll();
 markPristine();
 initRoster();
+mApply();
 setView(VIEW_SAVED==="dm"?"dm":"player",false);
 </script>
 <script>if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)&&!window.claude)navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
