@@ -123,6 +123,14 @@ button.alt{background:var(--teal);color:var(--on-teal);}
 .itmods{display:flex;flex-wrap:wrap;gap:.5rem;font-size:.8rem;margin:.2rem 0}.itmods input{width:3.2rem}
 .addgear{display:flex;gap:.4rem;margin-top:.45rem}.addgear input{flex:1;min-width:0}
 .money{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.money label{display:flex;align-items:center;gap:.25rem;font-size:.85rem}.money input{width:100%;min-width:0}
+dialog#rollbox{max-width:460px;width:94vw;max-height:86vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}
+dialog#rollbox::backdrop{background:rgba(20,16,10,.45)}
+#roll_body{padding:.4rem 1rem 1rem;font-size:.92rem}#roll_body .rt{font-size:1.05rem;margin:.2rem 0 .3rem}
+#roll_body .rbig{font-size:1.15rem;margin:.2rem 0 .5rem;padding:.55rem .7rem;background:var(--parchment-dim);border-left:3px solid var(--legend);border-radius:3px}
+#roll_body .rparts{list-style:none;padding:0;margin:0 0 .6rem;display:flex;flex-wrap:wrap;gap:.3rem .9rem;font-size:.85rem;color:var(--ink-soft)}#roll_body .rparts b{color:var(--ink)}
+#roll_body p{margin:.45rem 0}#roll_body .rsm{font-size:.84rem;color:var(--ink-soft)}
+#roll_body .rnotes{margin-top:.6rem;padding:.5rem .7rem;border:1px solid var(--line);border-radius:4px;font-size:.86rem}#roll_body .rnotes ul{margin:.3rem 0 0;padding-left:1.1rem}#roll_body .rnotes li{margin:.2rem 0}
+#roll_body .rdesc{margin-top:.6rem;font-size:.86rem}#roll_body .rdesc summary{cursor:pointer;color:var(--legend);font-weight:600}
 dialog#lvlup{max-width:640px;width:94vw;max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);padding:0}
 dialog#lvlup::backdrop,dialog#qb::backdrop{background:rgba(20,16,10,.45)}
 dialog#qb{max-width:640px;width:94vw;max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);padding:0}
@@ -141,6 +149,19 @@ body.dmmode .grid{display:none}
 .dmfilters{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem;margin-bottom:.8rem}.dmfilters label{margin:0}.dmfilters select{width:auto;min-width:12rem}.dmrest{display:flex;gap:.4rem;margin-left:auto}
 .dmparty{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.4rem 1rem;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.6rem .8rem;margin-bottom:1rem;font-size:.9rem}
 .dmparty .k,.dmstats .k,.dmhp .k{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft)}
+.fight{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--legend);border-radius:var(--radius);padding:.6rem .8rem;margin-bottom:1rem}
+.fight.off{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .8rem}.fight.off .sm{margin-left:auto}
+.fhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.4rem}.fhead h3{font-size:1.05rem}.fbtns{display:flex;gap:.35rem;flex-wrap:wrap}
+.fnow{margin:.5rem 0;padding:.5rem .7rem;background:var(--parchment-dim);border-radius:var(--radius)}.fnow .k{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft)}.fnow b{font-size:1.05rem}.fnow ul{margin:.35rem 0 0;padding-left:1.1rem;font-size:.86rem}.fnow li{margin:.15rem 0}
+.frows{display:flex;flex-direction:column;gap:.3rem}
+.frow{display:grid;grid-template-columns:4.2rem minmax(0,1fr) auto;gap:.5rem;align-items:center;padding:.35rem .45rem;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.frow.cur{border-color:var(--legend);box-shadow:inset 3px 0 0 var(--legend);background:color-mix(in srgb,var(--legend) 7%,var(--panel))}
+.frow.dead{opacity:.55}.frow.dead .fname b{text-decoration:line-through}.frow.gone{opacity:.6}
+.frow .finit{width:4.2rem;text-align:center;font-weight:600}.fname{min-width:0}.fname .tag{font-size:.68rem;border:1px solid var(--line);border-radius:99px;padding:0 .35rem;color:var(--ink-soft)}
+.fname .amb{color:var(--amber-ink)}.fconds{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.2rem}.fconds .chip{font-size:.74rem;padding:.05rem .4rem}
+.fctl{display:flex;flex-wrap:wrap;gap:.25rem;align-items:center;justify-content:flex-end}.fctl input{width:4rem;padding:.3rem .35rem}.fctl select{width:auto;font-size:.8rem;padding:.28rem .3rem}
+.fadd{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;margin-top:.6rem;padding-top:.5rem;border-top:1px dashed var(--line)}.fadd input{width:4.2rem;padding:.3rem .4rem}.fadd #fm_name{width:11rem}.fadd #fm_count{width:3.4rem}
+@media(max-width:620px){.frow{grid-template-columns:3.6rem minmax(0,1fr)}.frow .finit{width:3.6rem}.fctl{grid-column:1 / -1;justify-content:flex-start}}
 .dmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.9rem}
 .dmcard{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:var(--radius);padding:.65rem .75rem;min-width:0}
 .dmcard.bloodied{border-left-color:var(--amber)}.dmcard.down{border-left-color:var(--warn)}
@@ -548,6 +569,7 @@ body.compact #dm_close{display:none}
 </div>
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>🎲 Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
+<dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
 <nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build"><span class="i" aria-hidden="true">✎</span>Build</button><button type="button" role="tab" data-tab="sheet"><span class="i" aria-hidden="true">▤</span>Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly"><span class="i" aria-hidden="true">♜</span>DM</button></nav>
 <div class="viewsw" id="viewsw"><span>Showing: <span class="vtag" id="view_tag">Player view</span></span><button type="button" class="ghost sm" id="view_btn" aria-pressed="false">Show DM tools</button><span class="small" id="view_note"></span></div>
@@ -1528,13 +1550,13 @@ function snapshot(){
     if(w.props.includes("Heavy")){if(gwm)extraProps.push(`+${pb} damage on Attack-action hits (Great Weapon Master)`);if(w.kind==="melee"?scores.str<13:scores.dex<13)extraProps.push(`disadvantage: needs ${w.kind==="melee"?"Strength":"Dexterity"} 13 for Heavy weapons`);}
     const rng=(w.props.find(p=>/^(Thrown|Range|Ammunition)\b/.test(p))||"").replace(/.*?(\d+\/\d+).*/,"$1");
     const mb=m+bonus,vmb=vm+bonus;
-    return {name:label,base:n,hit:am+(prof?pb:0)+hitB+bonus,prof,dmg:`${die}${mb?fmt(mb):""}`,type:w.type,vers:vers?`${vers}${vmb?fmt(vmb):""}`:"",props:[...w.props.filter(p=>!p.startsWith("Versatile")),...extraProps],mastery:mastered.includes(n)?w.mastery:"",
+    return {name:label,base:n,ab,hitB,magic:bonus,hit:am+(prof?pb:0)+hitB+bonus,prof,dmg:`${die}${mb?fmt(mb):""}`,type:w.type,vers:vers?`${vers}${vmb?fmt(vmb):""}`:"",props:[...w.props.filter(p=>!p.startsWith("Versatile")),...extraProps],mastery:mastered.includes(n)?w.mastery:"",
       die,m:mb,vm:vmb,versDie:vers,kind:w.kind,thrown:w.props.some(p=>p.startsWith("Thrown")),range:rng,reach:w.props.includes("Reach")?10:5};};
   const attacks=[...S.weapons.filter(w=>WEAPONS[w]).map(n=>mkAtk(n,0,n)),...im.weapons.map(x=>mkAtk(x.base,x.bonus,x.name))];
-  let unarmed={name:"Unarmed Strike",hit:mods.str+pb,dmg:`${1+mods.str>0?1+mods.str:1}`,type:"bludgeoning",props:[],vers:"",die:"1",m:mods.str,kind:"melee",reach:5,unarmed:true};
+  let unarmed={name:"Unarmed Strike",ab:"str",hit:mods.str+pb,dmg:`${1+mods.str>0?1+mods.str:1}`,type:"bludgeoning",props:[],vers:"",die:"1",m:mods.str,kind:"melee",reach:5,unarmed:true};
   if(hasFeat("Tavern Brawler")) unarmed={...unarmed,dmg:`1d4${mods.str?fmt(mods.str):""}`,die:"1d4"};
   if(fstyles.includes("Unarmed Fighting")){const d=S.weapons.length||S.shield?"1d6":"1d8";unarmed={...unarmed,dmg:`${d}${mods.str?fmt(mods.str):""}`,die:d,props:d==="1d6"?["1d8 with no weapon or shield in hand"]:[]};}
-  if(ma){const a=mods.dex>mods.str?"dex":"str";unarmed={...unarmed,hit:mods[a]+pb,dmg:`${ma}${mods[a]?fmt(mods[a]):""}`,die:ma,m:mods[a]};}
+  if(ma){const a=mods.dex>mods.str?"dex":"str";unarmed={...unarmed,ab:a,hit:mods[a]+pb,dmg:`${ma}${mods[a]?fmt(mods[a]):""}`,die:ma,m:mods[a]};}
   if(sp.natWeapon){const d=dieAvg(unarmed.die)>=3.5?unarmed.die:"1d6";unarmed={...unarmed,name:sp.natWeapon.name,type:sp.natWeapon.type,die:d,props:[...unarmed.props,"unarmed strike"],dmg:`${d}${unarmed.m?fmt(unarmed.m):""}`,natural:true};}
   attacks.push(unarmed);
   // species breath weapon
@@ -1928,6 +1950,14 @@ function load(){try{const raw=localStorage.getItem("ledger_v2");if(raw){S=hydrat
 
 /* ================= EXPORTED SHEET ================= */
 const SHEET_CSS=`
+.turn{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:2px 0 4px}
+.turn .tc{border:1px solid var(--line);border-radius:4px;padding:6px 9px;background:#fff;min-width:0}
+.turn h3{margin:0 0 4px;font:600 12px 'Work Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--rule)}
+.turn ul{margin:0;padding-left:0;list-style:none}.turn li{margin:0 0 5px}.turn ul ul{margin-top:3px;padding-left:10px}.turn .tatk li{margin:0 0 2px}
+.turn .td{color:var(--soft);font-size:11.5px}.turn details summary{cursor:pointer}.turn details .td{display:block;margin:2px 0 0 12px}
+.turn .tsp{display:flex;flex-wrap:wrap;gap:3px 5px;margin-top:3px}.turn .tsp>*{border:1px solid var(--line);border-radius:10px;padding:0 7px;font-size:11.5px}.turn .tsp i{color:var(--soft);font-style:normal;font-size:10px}
+@media(max-width:660px){.turn{grid-template-columns:1fr}}
+.turn.flat{display:block}.turn.flat .tc{border:0;border-top:1px solid var(--line);border-radius:0;padding:5px 0 2px;background:none}
 :root{color-scheme:light;--ink:#1d211c;--soft:#596057;--line:#d6cdb6;--rule:#7a5424;--tint:#f6f1e4;}
 *{box-sizing:border-box}
 body{margin:0;background:#fff;color:var(--ink);font:12.5px/1.45 'Work Sans',system-ui,sans-serif;}
@@ -2374,6 +2404,7 @@ function sheetHTML(mode,forPreview,live){
 ${tipsHTML(s,"vitals")}
 ${playPanelHTML(s,live)}
 ${resourcesHTML(s,live)}
+${turnHTML(s,live)}
 <h2>Abilities and saving throws</h2>${abil}${s.aura?`<p class="muted" style="margin:4px 0 0">Saves include Aura of Protection (${fmt(s.aura)}).</p>`:""}${tipsHTML(s,"abil")}
 <div class="cols"><div>
 <h2>Attacks</h2><table><tr><th>Weapon</th><th style="text-align:right">Hit</th><th>Damage</th><th>Notes</th></tr>${atkRows}</table>${tipsHTML(s,"attacks")}
@@ -2605,10 +2636,10 @@ function npcVoice(t,s){const F=s.first,v3=w=>/(s|sh|ch|x)$/.test(w)?w+"es":/[^ae
    .replace(/\byou (and|or) /g,F+" $1 ")
    .replace(/\byou (also |always )?([A-Za-z]+)\b/g,(m,adv,w)=>{if(/^(until|to|with|for|no|a|an|AC)$/.test(w))return m;return `${F} ${adv||""}${w==="have"?"has":w==="can"||w==="must"?w:v3(w)}`;})
    .replace(/\byou\b/g,s.O);}
-function npcModel(){
+function npcModel(you){
   const s=snapshot(),c=s.c,L=s.level,isCls=n=>!c.custom&&S.cls===n;
-  s.first=firstName(S.name)||"the character";
-  const pr=PRONOUNS[S.pronoun]||PRONOUNS.they;[s.P,s.O,s.R]=pr;s.Pc=cap(s.P);
+  s.first=you?"you":firstName(S.name)||"the character";
+  const pr=you?["your","you","yourself"]:PRONOUNS[S.pronoun]||PRONOUNS.they;[s.P,s.O,s.R]=pr;s.Pc=cap(s.P);
   s.sc=k=>c.scale&&c.scale[k]?c.scale[k][L-1]:"";
   s.dcOf=a=>8+s.pb+s.mods[a];
   s.isSub=n=>S.sub===n;
@@ -2642,7 +2673,7 @@ function npcModel(){
     if(n.startsWith("Breath Weapon"))return;
     if(/cantrips?$/.test(t)){out.s.push(`${n}: knows ${t.replace(/ cantrips?$/,"")}.`);return;}
     const kind=SP_KIND[n]||SP_KIND[n.replace(/ \(.*\)$/,"")]||"t";
-    if(!seen.has(n)){seen.add(n);const tt=cap(npcVoice(t||"",s));out[kind].push([n,tt&&!/[.!?]$/.test(tt)?tt+".":tt]);}
+    if(!seen.has(n)){seen.add(n);const tt=cap(you?String(t||""):npcVoice(t||"",s));out[kind].push([n,tt&&!/[.!?]$/.test(tt)?tt+".":tt]);}
   });
   if(loose.length) out.t.push([sp.choice||sp.name,loose.join(". ")+"."]);
   if(sp.inn&&sp.inn.length){const k=sp.inn.filter(x=>L>=x[0]),at=k.filter(x=>x[2]!=="1/LR").map(x=>x[1]+(x[3]?" (snakes only)":"")),lr=k.filter(x=>x[2]==="1/LR").map(x=>x[1]);
@@ -3097,7 +3128,7 @@ function drawPreview(){
   const fr=$("frame"),doc=fr.contentDocument;if(!doc)return;
   const y=fr.contentWindow.scrollY||0;
   doc.open();doc.write(sheetHTML(sheetMode(),true));doc.close();
-  if(sheetMode()==="pc")bindSheet(doc);
+  if(sheetMode()==="pc"){bindSheet(doc);try{annotateRolls(doc);}catch(e){}}
   fr.contentWindow.scrollTo(0,y);
   if(window.innerWidth<960){fitFrame();setTimeout(fitFrame,60);setTimeout(fitFrame,600);try{doc.fonts&&doc.fonts.ready.then(fitFrame);}catch(e){}}
 }
@@ -3442,8 +3473,8 @@ function playAct(b){
   }
   S.track=t;save();schedulePreview(true);
 }
-function sheetClick(e){const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();playAct(b);}
-function sheetKey(e){const t=e.target;if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-act][role=button]")){e.preventDefault();playAct(t);}
+function sheetClick(e){const r=e.target.closest("[data-roll]");if(r&&!e.target.closest("button,input,a")){e.preventDefault();showRoll(r.dataset.roll);return;}const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();playAct(b);}
+function sheetKey(e){const t=e.target;if((e.key==="Enter"||e.key===" ")&&t.dataset&&t.dataset.roll){e.preventDefault();showRoll(t.dataset.roll);return;}if((e.key==="Enter"||e.key===" ")&&t.matches&&t.matches("[data-act][role=button]")){e.preventDefault();playAct(t);}
   if(e.key==="Enter"&&t.id==="pl_amt"){e.preventDefault();}}
 function bindSheet(doc){doc.removeEventListener("click",sheetClick);doc.addEventListener("click",sheetClick);doc.removeEventListener("keydown",sheetKey);doc.addEventListener("keydown",sheetKey);}
 
@@ -3638,10 +3669,81 @@ function dmSpellsHTML(m){if(!m.spells.length)return "";const e=esc,k0=m.id+"|spe
 function dmTraitsHTML(m){if(!m.traits.length)return "";const e=esc,k0=m.id+"|traits";
   const li=m.traits.map(t=>{const i=t.indexOf(": ");return i>0&&i<45?`<li><b>${e(t.slice(0,i))}:</b> ${e(t.slice(i+2))}</li>`:`<li>${e(t)}</li>`;}).join("");
   return `<details class="dmnotes"${dmOpen(k0)} data-dmn="${e(k0)}"><summary class="small">Species traits (${e(m.species)})</summary><ul>${li}</ul></details>`;}
+/* ---------- initiative tracker (DM view) ----------
+   Party members come from the roster (their HP, conditions and concentration are the same records as the cards below);
+   monsters live only in this tracker. Kept in this browser so a refresh mid-fight loses nothing. */
+let FIGHT={on:false,round:1,cur:null,list:[]};
+try{const f=JSON.parse(localStorage.getItem("ledger_fight")||"null");if(f&&Array.isArray(f.list))FIGHT=f;}catch(e){}
+DMV.mf=DMV.mf||{name:"",count:"1",hp:"",ac:"",init:""};
+function fightSave(){try{localStorage.setItem("ledger_fight",JSON.stringify(FIGHT));}catch(e){}}
+let fightN=0;const fid=()=>"f"+Date.now().toString(36)+(fightN++);
+function fightRows(ms){const byId=Object.fromEntries(ms.map(m=>[m.id,m]));
+  return FIGHT.list.map((x,i)=>{if(x.k==="pc"){const m=byId[x.ref];return {...x,i,m,name:m?m.name:x.name,hp:m?m.hp:null,max:m?m.max:null,ac:m?m.ac:null,cond:m?m.cond:[],gone:!m};}return {...x,i};})
+   .sort((a,b)=>(b.init==null?-99:b.init)-(a.init==null?-99:a.init)||(a.k===b.k?0:a.k==="pc"?-1:1)||a.i-b.i);}
+const fightActive=r=>!r.gone&&(r.k==="pc"||r.hp>0);
+function fightStep(ms,dir){const rows=fightRows(ms).filter(r=>r.init!=null&&fightActive(r));if(!rows.length)return;
+  let i=rows.findIndex(r=>r.id===FIGHT.cur);
+  if(i<0){FIGHT.cur=rows[0].id;fightSave();return;}
+  i+=dir;if(i>=rows.length){i=0;FIGHT.round++;}else if(i<0){if(FIGHT.round>1){FIGHT.round--;i=rows.length-1;}else i=0;}
+  FIGHT.cur=rows[i].id;fightSave();}
+function fightAddParty(ms){ms.forEach(m=>{if(!FIGHT.list.some(x=>x.k==="pc"&&x.ref===m.id))FIGHT.list.push({id:fid(),k:"pc",ref:m.id,name:m.name,init:null});});}
+function fightHTML(ms){const e=esc;
+  if(!FIGHT.on)return `<div class="fight off"><b>Initiative tracker</b><span class="small muted">Turn order, rounds, monster HP and reminders for a fight.</span><button type="button" class="sm" data-fx="start">Start a fight</button></div>`;
+  const rows=fightRows(ms),cur=rows.find(r=>r.id===FIGHT.cur);
+  const need=rows.filter(r=>r.init==null&&!r.gone).length;
+  let rem="";
+  if(cur){const bits=[];
+    if(cur.k==="pc"&&cur.m){if(cur.m.hp===0)bits.push(`<b>Down:</b> ${e(cur.name)} makes a death saving throw (${cur.m.ds[0]} successes, ${cur.m.ds[1]} failures so far).`);
+      if(cur.m.conc)bits.push(`Concentrating on <b>${e(cur.m.conc)}</b>.`);if(/Concentration save/.test(cur.m.log||""))bits.push(`<span class="warnx">${e(cur.m.log)}</span>`);
+      if(cur.m.exh)bits.push(`Exhaustion ${cur.m.exh}: −${2*cur.m.exh} to d20 tests, −${5*cur.m.exh} ft speed.`);}
+    (cur.cond||[]).forEach(c=>bits.push(`<b>${e(c)}:</b> ${e(CONDITIONS[c]||"")}`));
+    rem=`<div class="fnow"><div><span class="k">Round ${FIGHT.round}</span><b>${e(cur.name)}'s turn</b></div>${bits.length?`<ul>${bits.map(b=>`<li>${b}</li>`).join("")}</ul>`:""}</div>`;}
+  else rem=`<div class="fnow"><div><span class="k">Round ${FIGHT.round}</span><b>${need?`Enter initiative for everyone, then press Next turn`:"Press Next turn to begin"}</b></div></div>`;
+  const condSel=(r)=>`<select data-fx="cond" data-f="${e(r.id)}" aria-label="Add a condition to ${e(r.name)}"><option value="">+ Cond…</option>${Object.keys(CONDITIONS).filter(c=>!(r.cond||[]).includes(c)).map(c=>`<option>${c}</option>`).join("")}</select>`;
+  const row=r=>{const down=r.hp===0,bl=r.hp>0&&r.max&&r.hp<=Math.floor(r.max/2);
+    return `<div class="frow${r.id===FIGHT.cur?" cur":""}${down&&r.k!=="pc"?" dead":""}${r.gone?" gone":""}">
+  <input type="number" class="finit" inputmode="numeric" data-finit="${e(r.id)}" value="${r.init==null?"":r.init}" placeholder="${r.k==="pc"&&r.m?fmt(r.m.init):"init"}" aria-label="Initiative for ${e(r.name)}">
+  <div class="fname"><b>${e(r.name)}</b>${r.k==="pc"?' <span class="tag">PC</span>':""}${r.gone?' <span class="small muted">(not in this party view)</span>':""}
+   <div class="small muted">AC ${r.ac==null?"–":r.ac} · HP <b class="${down?"warnx":bl?"amb":""}">${r.hp==null?"–":r.hp}</b>${r.max?` / ${r.max}`:""}${down?(r.k==="pc"?" · down":" · defeated"):bl?" · Bloodied":""}${r.k==="pc"&&r.m&&r.m.conc?` · concentrating: ${e(r.m.conc)}`:""}</div>
+   ${(r.cond||[]).length?`<div class="fconds">${r.cond.map(c=>`<button type="button" class="chip dmc" data-fx="uncond" data-f="${e(r.id)}" data-c="${e(c)}" title="Remove ${e(c)}">${e(c)} ×</button>`).join("")}</div>`:""}</div>
+  <div class="fctl">${r.gone?"":`<input type="number" min="1" inputmode="numeric" placeholder="HP" data-famt="${e(r.id)}" aria-label="Amount for ${e(r.name)}"><button type="button" class="ghost sm" data-fx="dmg" data-f="${e(r.id)}">Dmg</button><button type="button" class="ghost sm" data-fx="heal" data-f="${e(r.id)}">Heal</button>${condSel(r)}`}${r.k!=="pc"||r.gone?`<button type="button" class="ghost sm" data-fx="del" data-f="${e(r.id)}" aria-label="Remove ${e(r.name)}">×</button>`:""}</div></div>`;};
+  const mf=DMV.mf;
+  return `<div class="fight"><div class="fhead"><h3>Initiative</h3><div class="fbtns"><button type="button" class="ghost sm" data-fx="prev">‹ Back</button><button type="button" class="sm" data-fx="next">Next turn ›</button><button type="button" class="ghost sm" data-fx="end">End fight</button></div></div>
+ ${rem}
+ <div class="frows">${rows.map(row).join("")||'<p class="small muted">No one yet.</p>'}</div>
+ <div class="fadd"><b class="small">Add monsters</b>
+  <input type="text" id="fm_name" data-mf="name" value="${e(mf.name)}" placeholder="Name, e.g. Goblin" aria-label="Monster name">
+  <input type="number" id="fm_count" data-mf="count" value="${e(mf.count)}" min="1" max="20" inputmode="numeric" aria-label="How many" title="How many">
+  <input type="number" data-mf="hp" value="${e(mf.hp)}" min="1" inputmode="numeric" placeholder="HP" aria-label="Hit points each">
+  <input type="number" data-mf="ac" value="${e(mf.ac)}" min="1" inputmode="numeric" placeholder="AC" aria-label="Armor Class">
+  <input type="number" data-mf="init" value="${e(mf.init)}" inputmode="numeric" placeholder="Init" aria-label="Initiative (one roll for the group)">
+  <button type="button" class="sm" data-fx="addmon">Add</button>
+  <button type="button" class="ghost sm" data-fx="addparty" title="Add anyone in this party who isn't in the fight yet">+ Party</button></div>
+ <p class="small muted" style="margin:.4rem 0 0">Monsters of the same kind share one initiative roll. Ties: players decide among themselves, and you decide for monsters. To break a tie, type a decimal, like 14.5. Party HP and conditions here are the same as on the cards below.</p></div>`;}
+function fightClick(b,ms){const d=b.dataset,id=d.f,x=FIGHT.list.find(r=>r.id===id);
+  const amtEl=id?$("dmv").querySelector(`[data-famt="${CSS.escape(id)}"]`):null,amt=Math.max(0,parseInt(amtEl&&amtEl.value)||0);
+  if(d.fx==="start"){FIGHT={on:true,round:1,cur:null,list:[]};fightAddParty(ms.filter(m=>m.kind!=="npc"||DMV.npcs));}
+  else if(d.fx==="end"){if(!confirm("End this fight? The monsters are cleared."))return;FIGHT={on:false,round:1,cur:null,list:[]};}
+  else if(d.fx==="next")fightStep(ms,1);else if(d.fx==="prev")fightStep(ms,-1);
+  else if(d.fx==="addparty")fightAddParty(ms);
+  else if(d.fx==="addmon"){const mf=DMV.mf,n=Math.max(1,Math.min(20,parseInt(mf.count)||1)),hp=Math.max(1,parseInt(mf.hp)||1),ac=parseInt(mf.ac),ini=mf.init===""?null:+mf.init,nm=(mf.name||"").trim()||"Monster";
+    for(let i=1;i<=n;i++)FIGHT.list.push({id:fid(),k:"mon",name:n>1?`${nm} ${i}`:nm,init:isFinite(ini)?ini:null,hp,max:hp,ac:isFinite(ac)?ac:null,cond:[]});
+    DMV.mf={name:"",count:"1",hp:"",ac:"",init:""};}
+  else if(!x)return;
+  else if(d.fx==="del"){if(FIGHT.cur===id)fightStep(ms,1);FIGHT.list=FIGHT.list.filter(r=>r.id!==id);if(FIGHT.cur===id)FIGHT.cur=null;}
+  else if(x.k==="pc"){if(d.fx==="dmg"&&amt)dmUpdate(x.ref,(t,s)=>dmDamage(t,s,amt));else if(d.fx==="heal"&&amt)dmUpdate(x.ref,(t,s)=>{const c0=curHP(s);t.hp=Math.min(s.hp,c0+amt);if(c0===0)t.ds=[0,0];t.log=`Healed ${Math.min(amt,s.hp-c0)} HP.`;});
+    else if(d.fx==="uncond")dmUpdate(x.ref,t=>{t.cond=(t.cond||[]).filter(c=>c!==d.c);});}
+  else{if(d.fx==="dmg"&&amt)x.hp=Math.max(0,x.hp-amt);else if(d.fx==="heal"&&amt)x.hp=Math.min(x.max,x.hp+amt);else if(d.fx==="uncond")x.cond=(x.cond||[]).filter(c=>c!==d.c);}
+  fightSave();renderDM();}
+function fightChange(t,ms){if(t.dataset.finit!==undefined){const x=FIGHT.list.find(r=>r.id===t.dataset.finit);if(x){const v=t.value.trim();x.init=v===""||!isFinite(+v)?null:+v;fightSave();renderDM();}return true;}
+  if(t.dataset.fx==="cond"&&t.value){const x=FIGHT.list.find(r=>r.id===t.dataset.f);if(x){if(x.k==="pc")dmUpdate(x.ref,y=>{y.cond=[...(y.cond||[]),t.value];});else{x.cond=[...(x.cond||[]),t.value];fightSave();renderDM();}}return true;}
+  return false;}
+
+function dmModels(){return dmParty().map(ch=>{try{return dmModel(ch);}catch(err){return null;}}).filter(Boolean);}
 function renderDM(){const box=$("dmv");if(!box||box.hidden)return;const e=esc;
   const online=RS.db&&RS.charsLoaded,camp=DMV.camp??(S.campaign||"");
   const party=dmParty(),ms=party.map(ch=>{try{return dmModel(ch);}catch(err){return null;}}).filter(Boolean),pcs=ms.filter(m=>m.kind!=="npc");
-  const focus=document.activeElement&&document.activeElement.dataset?{amt:document.activeElement.dataset.amt,val:document.activeElement.value}:null;
+  const fa=document.activeElement,focus=fa&&fa.dataset&&$("dmv").contains(fa)?{amt:fa.dataset.amt,famt:fa.dataset.famt,finit:fa.dataset.finit,mf:fa.dataset.mf,val:fa.value}:null;
   let h=`<div class="dmtop"><h2>DM view</h2><button type="button" class="ghost sm" id="dm_close">Back to the builder</button></div>`;
   if(online) h+=`<div class="dmfilters"><label for="dm_camp">Party</label><select id="dm_camp">${[["","No campaign"],...RS.camps.map(c=>[c.id,c.name])].map(([v,t])=>`<option value="${e(v)}"${v===camp?" selected":""}>${e(t)}</option>`).join("")}</select>
    <label class="chk small"><input type="checkbox" id="dm_npc"${DMV.npcs?" checked":""}> Include NPCs</label>
@@ -3649,6 +3751,7 @@ function renderDM(){const box=$("dmv");if(!box||box.hidden)return;const e=esc;
    <span class="dmrest"><button type="button" class="ghost sm" data-dm="partysr">Short rest (party)</button><button type="button" class="ghost sm" data-dm="partylr">Long rest (party)</button></span></div>`;
   if(DMV.msg)h+=`<p class="dmmsg" role="status">${DMV.msg}</p>`;
   else if(!online)h+=`<p class="hint">Save characters to your roster (in a campaign) to see the whole party here. For now this shows the character you have open.</p>`;
+  h+=fightHTML(ms);
   if(pcs.length){const low=pcs.reduce((a,b)=>b.pp<a.pp?b:a),high=pcs.reduce((a,b)=>b.pp>a.pp?b:a),blind=pcs.filter(m=>!m.dark&&!m.senses.some(x=>/Blindsight|Truesight|Devil/.test(x)));
     const isFree=l=>/languages? of your choice$/.test(l),who={};pcs.forEach(m=>m.langs.filter(l=>!isFree(l)).forEach(l=>(who[l]=who[l]||[]).push(m.name)));
     const langRows=Object.entries(who).sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0])).map(([l,ns])=>`${e(l)} <span class="muted">(${ns.length===pcs.length?(pcs.length>1?"everyone":e(ns[0])):ns.map(e).join(", ")})</span>`);
@@ -3661,7 +3764,7 @@ function renderDM(){const box=$("dmv");if(!box||box.hidden)return;const e=esc;
      <div><span class="k">Encounter XP budget</span>Low <b>${bud[0].toLocaleString()}</b> · Moderate <b>${bud[1].toLocaleString()}</b> · High <b>${bud[2].toLocaleString()}</b></div></div>`;}
   h+=ms.length?`<div class="dmgrid">${ms.map(dmCard).join("")}</div>`:`<p class="hint">No ${DMV.npcs?"characters":"player characters"} in this campaign yet. Set a character's campaign in the roster bar and save it.</p>`;
   box.innerHTML=h;
-  if(focus&&focus.amt){const el=box.querySelector(`[data-amt="${CSS.escape(focus.amt)}"]`);if(el){el.value=focus.val||"";el.focus();}}}
+  if(focus){const k=focus.amt?["amt",focus.amt]:focus.famt?["famt",focus.famt]:focus.finit?["finit",focus.finit]:focus.mf?["mf",focus.mf]:null;if(k){const el=box.querySelector(`[data-${k[0]}="${CSS.escape(k[1])}"]`);if(el){if(k[0]==="amt"||k[0]==="famt")el.value=focus.val||"";el.focus();}}}}
 // a player's character file goes straight into the party shown here, without touching the character open in the builder
 $("dm_import").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
   let st;try{const d=JSON.parse(await f.text());if(!d||d.format!=="character-ledger"||!d.state)throw new Error("format");st=hydrate(d.state);}
@@ -3685,7 +3788,7 @@ async function dmImportWrite(update){const p=DMV.pend;DMV.pend=null;if(!p||!RS.d
 function openDM(){document.body.classList.add("dmmode");$("dmv").hidden=false;$("dm_btn").setAttribute("aria-pressed","true");renderDM();window.scrollTo({top:0});}
 function closeDM(){document.body.classList.remove("dmmode");$("dmv").hidden=true;$("dm_btn").setAttribute("aria-pressed","false");schedulePreview(true);if(typeof MB!=="undefined"&&MB.on&&MB.tab==="dm")mTab("build",true);}
 $("dm_btn").addEventListener("click",()=>document.body.classList.contains("dmmode")?closeDM():openDM());
-$("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset,id=d.id;
+$("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.fx){fightClick(b,dmModels());return;}const d=b.dataset,id=d.id;
   if(b.id==="dm_close"){closeDM();return;}
   if(d.dm==="addfile"){DMV.msg="";DMV.pend=null;$("dm_import").click();return;}
   if(d.dm==="impnew"||d.dm==="impupd"){dmImportWrite(d.dm==="impupd");return;}
@@ -3701,10 +3804,12 @@ $("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   else if(d.dm==="exh")dmUpdate(id,t=>{t.exh=Math.max(0,Math.min(6,(t.exh||0)+(+d.d)));});
   else if(d.dm==="partysr"||d.dm==="partylr"){if(!confirm(`${d.dm==="partylr"?"Long":"Short"} rest for everyone shown?`))return;party().forEach(pid=>dmUpdate(pid,(t,s)=>d.dm==="partylr"?playLongRest(s,t):playShortRest(s,t)));}});
 $("dmv").addEventListener("change",e=>{const t=e.target;
+  if(fightChange(t,dmModels()))return;
   if(t.id==="dm_camp"){DMV.camp=t.value;try{localStorage.setItem("ledger_dmcamp",t.value);}catch(x){}renderDM();}
   else if(t.id==="dm_npc"){DMV.npcs=t.checked;try{localStorage.setItem("ledger_dmnpc",t.checked?"1":"0");}catch(x){}renderDM();}
   else if(t.dataset.dm==="addcond"&&t.value)dmUpdate(t.dataset.id,x=>{x.cond=[...(x.cond||[]),t.value];});});
-$("dmv").addEventListener("keydown",e=>{const t=e.target;if(e.key==="Enter"&&t.dataset&&t.dataset.amt){e.preventDefault();const b=$("dmv").querySelector(`[data-dm="dmg"][data-id="${CSS.escape(t.dataset.amt)}"]`);if(b)b.click();}});
+$("dmv").addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.mf!==undefined)DMV.mf[t.dataset.mf]=t.value;});
+$("dmv").addEventListener("keydown",e=>{const t=e.target;if(e.key==="Enter"&&t.dataset&&t.dataset.famt){e.preventDefault();const b=$("dmv").querySelector(`[data-fx="dmg"][data-f="${CSS.escape(t.dataset.famt)}"]`);if(b)b.click();return;}if(e.key==="Enter"&&t.dataset&&t.dataset.mf!==undefined){e.preventDefault();const b=$("dmv").querySelector('[data-fx="addmon"]');if(b)b.click();return;}if(e.key==="Enter"&&t.dataset&&t.dataset.amt){e.preventDefault();const b=$("dmv").querySelector(`[data-dm="dmg"][data-id="${CSS.escape(t.dataset.amt)}"]`);if(b)b.click();}});
 document.addEventListener("toggle",e=>{if(e.target.dataset&&e.target.dataset.dmn)DMV.open[e.target.dataset.dmn]=e.target.open;},true);
 
 // hook-ups
@@ -3718,6 +3823,7 @@ $("lvlup").addEventListener("click",e=>{const b=e.target.closest("button");if(!b
   if(b.id==="lv_undo"){const e=lvEntry(),key=e.primary?e.level:`${e.cls}:${e.level}`;if(S.hpRolls)delete S.hpRolls[key];if(LV.from)lvRestore(LV.from);else S.level=Math.max(1,S.level-1);$("level").value=String(S.level);renderAll();closeLevelUp();return;}
   if(b.dataset.jump){closeLevelUp();const el=$(b.dataset.jump);if(el){mReveal(el);el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");}}});
 $("lvlup").addEventListener("close",()=>schedulePreview(true));
+$("roll_x").addEventListener("click",closeRoll);$("rollbox").addEventListener("click",e=>{if(e.target===$("rollbox"))closeRoll();});
 function setPlay(on){document.body.classList.toggle("playing",on);$("play_btn").setAttribute("aria-pressed",String(on));$("play_btn").textContent=on?"Back to builder":"Play mode";if(on&&S.mode!=="pc"){S.mode="pc";document.querySelector('input[name=mode][value="pc"]').checked=true;syncTips();}schedulePreview(true);}
 $("play_btn").addEventListener("click",()=>{setPlay(!document.body.classList.contains("playing"));window.scrollTo({top:0});});
 
@@ -3959,6 +4065,158 @@ $("r_import").addEventListener("change",async e=>{
     rsStatus(RS.off?`Opened ${esc(S.name||"a character")} from the file.`:`Opened ${esc(S.name||"a character")} from the file. Press Save to roster to keep it.`);
   }catch(err){rsStatus("That file isn't a Character Ledger character file.");}
 });
+
+/* ================= ON YOUR TURN + WHAT TO ROLL =================
+   "On your turn" lists what this character can do with an action, bonus action, reaction and movement.
+   Tapping a number on the live sheet opens a note with exactly what to roll and what to add (the builder never rolls). */
+const STD_ACTIONS=[
+ ["Attack","Make an attack with a weapon or an Unarmed Strike."],
+ ["Dash","Move extra distance this turn, up to your speed again."],
+ ["Disengage","Your movement doesn't provoke Opportunity Attacks for the rest of this turn."],
+ ["Dodge","Until your next turn, attacks against you have disadvantage if you can see the attacker, and you have advantage on Dexterity saves. It stops if you're Incapacitated or your speed drops to 0."],
+ ["Help","Pick one of your skill or tool proficiencies: an ally gets advantage on their next check with it before your next turn starts. Or distract an enemy within 5 feet: the next attack an ally makes against it before your next turn starts has advantage."],
+ ["Hide","You need both: to be heavily obscured or behind three-quarters or total cover, and to be out of every enemy's line of sight. Make a Dexterity (Stealth) check against DC 15. On a success you're Invisible until you make noise louder than a whisper, make an attack roll, cast a spell with a Verbal component, or an enemy finds you. Your Stealth total is the DC for an enemy's Wisdom (Perception) check to find you."],
+ ["Influence","Try to change a creature's attitude: a Charisma (Deception, Intimidation, Performance or Persuasion) check, or Wisdom (Animal Handling) to coax a Beast or Monstrosity."],
+ ["Magic","Cast a spell that takes an action, or use a magic item or feature that needs the Magic action."],
+ ["Ready","Choose a trigger and what you'll do (an action or moving). When the trigger happens before your next turn, use your Reaction to do it. A readied spell needs Concentration until it's released."],
+ ["Search","Look for something: a Wisdom (Insight, Medicine, Perception or Survival) check."],
+ ["Study","Recall or work something out: an Intelligence (Arcana, History, Investigation, Nature or Religion) check."],
+ ["Utilize","Use a nonmagical object in a way that takes effort, like picking a lock with tools or pulling a lever that's stuck."]];
+const TURN_SKILLS={Hide:["Stealth"],Influence:["Deception","Intimidation","Performance","Persuasion","Animal Handling"],Search:["Insight","Medicine","Perception","Survival"],Study:["Arcana","History","Investigation","Nature","Religion"]};
+// class, species and feat options sorted by the action they use (the stat block's sorting, in second person)
+function turnFeatures(){const out={a:[],b:[],r:[]};try{const m=npcModel(true),o=m.out;
+  ["a","b","r"].forEach(k=>o[k].forEach(([n,t])=>{if(!n)return;out[k].push([n,youVoice(capS(String(t||"")))]);}));}catch(e){}return out;}
+function turnSpells(){const by={a:[],b:[],r:[]};try{knownSpells().forEach(k=>{const sp=SP_BY[k.n];if(!sp)return;const t=String(sp.t||"");
+  const kind=/^Bonus Action/.test(t)?"b":/^Reaction/.test(t)?"r":/^Action/.test(t)?"a":"";if(!kind)return;
+  if(!by[kind].some(x=>x.n===k.n))by[kind].push({n:k.n,ab:k.ab||"",l:sp.l,tr:sp.tr||""});});}catch(e){}return by;}
+function lightPair(s){const light=s.attacks.filter(a=>!a.unarmed&&(a.props||[]).includes("Light"));return light.length>=2?light:null;}
+function turnHTML(s,live){const e=esc,R=(key,html)=>live?`<span class="rl" data-roll="${e(key)}" role="button" tabindex="0">${html}</span>`:html;
+  const n=attacksPerAction(s),f=turnFeatures(),sp=turnSpells();
+  const item=(name,text,extra)=>`<li><b>${e(name)}</b>${extra||""}${text?` <span class="td">${e(text)}</span>`:""}</li>`;
+  const det=(name,text)=>`<li><details><summary><b>${e(name)}</b></summary><span class="td">${e(text)}</span></details></li>`;
+  const atkList=s.attacks.map((a,i)=>`<li>${e(a.name)}: ${R("atk:"+i,`${fmt(a.hit)} to hit`)}, ${R("dmg:"+i,`${e(a.dmg)} ${e(a.type)}`)}${a.vers?` (${R("vers:"+i,`${e(a.vers)} two-handed`)})`:""}</li>`).join("");
+  const spellChips=list=>list.length?`<div class="tsp">${list.map(x=>R(`spell:${x.n}|${x.ab}`,`${e(x.n)}${x.l?` <i>${x.l}</i>`:""}`)).join("")}</div>`:"";
+  const sk=nm=>{const x=s.skills.find(y=>y.name===nm);return x?R("skill:"+nm,`${nm} ${fmt(x.bonus)}`):nm;};
+  // action
+  let A=`<li><b>Attack</b> <span class="td">${n>1?`Make <b>${["","one","two","three","four"][n]||n} attacks</b> each time you take this action.`:"Make one attack."} Instead of damage, an Unarmed Strike can ${R("grapple",`grapple or shove`)} (the target saves against DC ${8+s.pb+s.mods.str}).</span><ul class="tatk">${atkList}</ul></li>`;
+  if(sp.a.length)A+=`<li><b>Cast a spell</b> <span class="td">(Magic action)</span>${spellChips(sp.a)}</li>`;
+  if(s.breath)A+=`<li><b>Breath Weapon</b> <span class="td">replaces one of your attacks: ${R("breath",`DC ${s.breath.dc} Dexterity save, ${e(s.breath.dmg)} ${e(s.breath.type)}`)}, ${s.breath.uses} uses per long rest.</span></li>`;
+  f.a.forEach(([nm,t])=>A+=det(nm,t));
+  A+=`<li class="tstd"><b>Anyone can:</b><ul>${STD_ACTIONS.slice(1).map(([nm,t])=>`<li><details><summary>${e(nm)}${TURN_SKILLS[nm]?` <span class="td">(${TURN_SKILLS[nm].map(sk).join(", ")})</span>`:""}</summary><span class="td">${e(t)}</span></details></li>`).join("")}</ul></li>`;
+  // bonus action
+  let B="";const lp=lightPair(s);
+  if(lp)B+=item("Second Light weapon attack",`After you attack with one Light weapon using the Attack action, attack with a different Light weapon (${lp.map(a=>a.name).join(", ")}). ${(s.fstyles||[]).includes("Two-Weapon Fighting")?"Two-Weapon Fighting: add your ability modifier to its damage as normal.":"Don't add your ability modifier to this attack's damage unless it's negative."}${lp.some(a=>a.mastery==="Nick")?" With the Nick mastery, you make this extra attack as part of the Attack action instead, so your Bonus Action stays free.":""}`);
+  if(sp.b.length)B+=`<li><b>Cast a spell</b>${spellChips(sp.b)}</li>`;
+  f.b.forEach(([nm,t])=>B+=det(nm,t));
+  B+=item("Drink or give a potion","Drinking a potion, or giving one to someone within 5 feet, takes your Bonus Action.");
+  // reaction
+  let Rn=item("Opportunity Attack","When a creature you can see leaves your reach, make one melee attack (a weapon or an Unarmed Strike) against it. Teleporting, or being moved by something else, doesn't trigger it.");
+  if(sp.r.length)Rn+=`<li><b>Cast a spell</b>${spellChips(sp.r)}${sp.r.map(x=>x.tr?`<div class="td">${e(x.n)}: ${e(x.tr.replace(/^which you take /,""))}.</div>`:"").join("")}</li>`;
+  f.r.forEach(([nm,t])=>Rn+=det(nm,t));
+  // movement
+  const speeds=[`${s.speed} ft`,...s.moves.map(([k,v])=>`${k.toLowerCase()} ${v} ft`)].join(", ");
+  const M=`<li><b>Speed ${e(speeds)}</b> <span class="td">Split it up however you like: before, between and after your attacks.</span></li>
+<li><span class="td">Standing up from Prone costs half your speed. Difficult terrain costs 1 extra foot for every foot you move${(()=>{const no=[s.moves.some(([k])=>k==="Climb")?"":"climbing",s.moves.some(([k])=>k==="Swim")?"":"swimming"].filter(Boolean);return no.length?`, and so does ${no.join(" or ")}`:"";})()}.</span></li>
+<li><span class="td">Also free once per turn: interact with one object as part of moving or acting, like drawing a weapon or opening a door. Talking briefly is free.</span></li>`;
+  return `<h2>On your turn</h2><p class="muted" style="margin:0 0 6px">Each turn: move up to your speed and take one <b>Action</b>. Take a <b>Bonus Action</b> only if something below gives you one. You get one <b>Reaction</b> per round, even on other creatures' turns.${live?` <b>Tap any dotted number</b> to see exactly what to roll.`:""}</p>
+<div class="turn${live?"":" flat"}"><div class="tc"><h3>Action</h3><ul>${A}</ul></div><div class="tc"><h3>Bonus Action</h3><ul>${B}</ul></div><div class="tc"><h3>Reaction</h3><ul>${Rn}</ul></div><div class="tc"><h3>Movement</h3><ul>${M}</ul></div></div>`;}
+
+/* ---------- what to roll ---------- */
+const COND_ROLL={ // how the current conditions change each kind of roll
+ atk:{Blinded:"disadvantage",Frightened:"disadvantage while you can see the source of your fear",Poisoned:"disadvantage",Prone:"disadvantage",Restrained:"disadvantage",Invisible:"advantage",Grappled:"disadvantage against anyone other than the creature grappling you"},
+ check:{Frightened:"disadvantage while you can see the source of your fear",Poisoned:"disadvantage",Blinded:"automatic failure if the check needs sight"},
+ save:{Paralyzed:"automatic failure on Strength and Dexterity saves",Stunned:"automatic failure on Strength and Dexterity saves",Unconscious:"automatic failure on Strength and Dexterity saves",Petrified:"automatic failure on Strength and Dexterity saves",Restrained:"disadvantage on Dexterity saves"},
+ init:{Invisible:"advantage",Incapacitated:"disadvantage"}};
+function rollParts(list){return list.filter(p=>p&&(p[0]||p[2])).map(([v,l])=>`<li><b>${fmt(v)}</b> ${esc(l)}</li>`).join("");}
+function rollCtx(){const s=playAdjust(snapshot()),names=new Set([...s.featuresSoFar.map(x=>x.f),...s.feats]);return {s,has:n=>names.has(n)||[...names].some(x=>x.startsWith(n+" ")||x.startsWith(n+":")),trait:re=>s.spTraits.filter(t=>re.test(t)),cond:S.track.cond||[]};}
+function condNotes(c,kind,abil){const m=COND_ROLL[kind]||{};return c.cond.filter(k=>m[k]&&!(kind==="save"&&/Strength and Dexterity/.test(m[k])&&!["str","dex"].includes(abil))&&!(kind==="save"&&k==="Restrained"&&abil!=="dex")).map(k=>`You're ${k}: ${m[k]}.`);}
+function d20Notes(c,kind,abil,skill){const s=c.s,out=[];
+  if(c.trait(/^Luck:/).length)out.push("Luck (Halfling): if the d20 shows a 1, reroll it and use the new roll.");
+  if(kind==="check"&&skill&&c.has("Reliable Talent")&&s.skills.find(x=>x.name===skill&&x.prof))out.push("Reliable Talent: for this skill, treat a d20 roll of 9 or lower as a 10.");
+  if(kind==="check"&&skill==="Stealth"&&s.arm&&s.arm.stealth)out.push(`Your ${s.arm.name} gives disadvantage on Stealth checks.`);
+  if(lvlIn("Barbarian")&&abil==="str"&&kind!=="atk")out.push("While raging: advantage on Strength checks and saves.");
+  if(kind==="save"&&abil==="dex"&&c.has("Danger Sense"))out.push("Danger Sense: advantage on Dexterity saves unless you're Incapacitated.");
+  if(kind==="death")return out.concat(S.track.insp?["You have Heroic Inspiration: after rolling any die, you can spend it to reroll that die, and you must use the new roll."]:[]);
+  if(kind==="save")c.trait(/advantage on (?:[A-Za-z, ]*)?saves?/i).forEach(t=>out.push(t.replace(/^([^:]+):/,"$1 (species):")+"."));
+  if(kind==="check")c.trait(/advantage on [^.]*checks?/i).forEach(t=>out.push(t.replace(/^([^:]+):/,"$1 (species):")+"."));
+  if(kind==="save"&&abil==="con"&&c.has("War Caster"))out.push("War Caster: advantage on Constitution saves to keep Concentration.");
+  if(c.has("Lucky"))out.push("Lucky (feat): spend a Luck Point to give yourself advantage.");
+  if(S.track.insp)out.push("You have Heroic Inspiration: after rolling any die, you can spend it to reroll that die, and you must use the new roll.");
+  return out.concat(condNotes(c,kind,abil));}
+const ADV_TXT=b=>`<p class="rsm"><b>Advantage:</b> roll two d20s, keep the higher, then add ${b}. <b>Disadvantage:</b> keep the lower. If you have both, they cancel out: roll one. Bonus dice someone gives you (like Bless, Guidance or Bardic Inspiration) are rolled and added too.</p>`;
+function rollBox(title,big,parts,what,notes,extra){return `<h3 class="rt">${esc(title)}</h3><p class="rbig">${big}</p>${parts?`<ul class="rparts">${parts}</ul>`:""}${what?`<p>${what}</p>`:""}${extra||""}${notes&&notes.length?`<div class="rnotes"><b>Also remember</b><ul>${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`:""}`;}
+const diceTxt=(die,m)=>die==="1"||!/d/.test(die)?`${Math.max(1,(+die||1)+m)}`:`${die}${m?` ${m>0?"+":"−"} ${Math.abs(m)}`:""}`;
+const critDie=d=>String(d).replace(/(\d+)d(\d+)/g,(x,n,f)=>`${2*n}d${f}`);
+function rollInfo(key){const c=rollCtx(),s=c.s,pb=s.pb,ex=s.exhPen||0,exP=ex?[-ex,"Exhaustion"]:null;
+  const [kind,arg0]=[key.split(":")[0],key.slice(key.indexOf(":")+1)];
+  if(kind==="skill"){const x=s.skills.find(y=>y.name===arg0);if(!x)return "";const m=s.mods[x.ab],p=x.exp?2*pb:x.prof?pb:s.joat?Math.floor(pb/2):0;
+    const rest=x.bonus+ex-m-p,ord=S.opts&&S.opts.order;const rl=ord==="Thaumaturge"&&["Arcana","Religion"].includes(x.name)?"Thaumaturge (Divine Order)":ord==="Magician"&&["Arcana","Nature"].includes(x.name)?"Magician (Primal Order)":"a feature or magic item";
+    return rollBox(`${x.name} check (${AF[x.ab]})`,`Roll <b>1d20 ${sgnB(x.bonus)}</b>`,rollParts([[m,`${AF[x.ab]} modifier`,1],[p,x.exp?"proficiency ×2 (Expertise)":x.prof?"proficiency":"half proficiency (Jack of All Trades)"],[rest,rl],exP]),
+      `The DM sets how hard it is (the DC). Meet or beat it to succeed. ${x.name==="Perception"?`When you're not actively looking, the DM uses your passive Perception, ${10+x.bonus}, instead of asking for a roll.`:""}`,d20Notes(c,"check",x.ab,x.name),ADV_TXT(sgnB(x.bonus)));}
+  if(kind==="check"){const a=arg0,m=s.mods[a];return rollBox(`${AF[a]} check`,`Roll <b>1d20 ${sgnB(m-ex)}</b>`,rollParts([[m,`${AF[a]} modifier`,1],exP]),`For a plain ${AF[a]} check that doesn't use a skill. If the DM names a skill (like "${AF[a]} (${(SKILLS.find(k=>k[1]===a)||["Athletics"])[0]})"), tap that skill instead.`,d20Notes(c,"check",a),ADV_TXT(sgnB(m-ex)));}
+  if(kind==="save"){const v=s.saves.find(y=>y.a===arg0);const m=s.mods[v.a],p=v.prof?pb:0,au=s.aura||0,rest=v.bonus+ex-m-p-au;
+    return rollBox(`${AF[v.a]} saving throw`,`Roll <b>1d20 ${sgnB(v.bonus)}</b>`,rollParts([[m,`${AF[v.a]} modifier`,1],[p,"proficiency"],[au,"Aura of Protection"],[rest,"a feature or magic item"],exP]),
+      `Whatever forces the save sets the DC. Meet or beat it to succeed.${v.a==="con"&&S.track.conc?` You're concentrating on ${esc(S.track.conc)}: after taking damage, this save's DC is 10 or half the damage, whichever is higher (up to 30).`:v.a==="con"?" Concentration saves use this too: after taking damage, the DC is 10 or half the damage, whichever is higher (up to 30).":""}`,d20Notes(c,"save",v.a),ADV_TXT(sgnB(v.bonus)));}
+  if(kind==="init"){const m=s.mods.dex,al=c.has("Alert")?pb:0,spb=s.sp.initPB?pb:0,rest=s.init+ex-m-al-spb;const n=d20Notes(c,"init","dex");
+    if(c.has("Feral Instinct"))n.unshift("Feral Instinct: advantage on initiative.");n.push("If you're surprised when the fight starts, roll with disadvantage.");
+    return rollBox("Initiative",`Roll <b>1d20 ${sgnB(s.init)}</b>`,rollParts([[m,"Dexterity modifier",1],[al,"Alert"],[spb,"species trait"],[rest,"a magic item"],exP]),`This is a Dexterity check at the start of a fight. Highest total goes first.`,n,ADV_TXT(sgnB(s.init)));}
+  if(kind==="atk"||kind==="dmg"||kind==="vers"){const a=s.attacks[+arg0];if(!a)return "";const ab=a.ab||"str",m=s.mods[ab];
+    if(kind==="atk"){const p=a.prof===false?0:pb,rest=a.hit+ex-m-p-(a.hitB||0)-(a.magic||0);
+      return rollBox(`${a.name}: attack roll`,`Roll <b>1d20 ${sgnB(a.hit)}</b>`,rollParts([[m,`${AF[ab]} modifier`,1],[p,"proficiency"],[a.hitB||0,"Archery fighting style"],[a.magic||0,"magic weapon"],[rest,"a feature"],exP]),
+        `Meet or beat the target's Armor Class to hit. A roll of 20 on the die always hits and is a <b>critical hit</b>; a 1 always misses.${a.prof===false?" You're not proficient with this weapon, so proficiency isn't added.":""}${a.range?(()=>{const [n1,n2]=a.range.split("/");return a.kind==="ranged"?` Range ${n1}/${n2} ft: past ${n1} ft you have disadvantage, and you can't shoot past ${n2} ft. You also have disadvantage if an enemy that can see you, and isn't Incapacitated, is within 5 feet of you.`:` If you throw it: past ${n1} ft you have disadvantage, and you can't throw it past ${n2} ft. A throw is a ranged attack, so you also have disadvantage if an enemy that can see you, and isn't Incapacitated, is within 5 feet of you.`;})():""}`,
+        [...d20Notes(c,"atk",ab),...(/disadvantage: needs/.test((a.props||[]).join(" "))?["Heavy weapon: you have disadvantage because your score is below 13."]:[])],ADV_TXT(sgnB(a.hit)));}
+    const two=kind==="vers",die=two?a.versDie:a.die,mm=two?a.vm:a.m;const duel=!two&&a.m-(a.magic||0)-m;
+    const dn=[];const sc=k=>{const e2=s.scale.find(([x])=>x===k||x.endsWith(" "+k)||x.endsWith(": "+k));return e2?e2[1]:"";};
+    const sa=sc("Sneak Attack");if(sa&&(a.kind==="ranged"||(a.props||[]).includes("Finesse")))dn.push(`Sneak Attack: once per turn, add ${sa} when you hit and had advantage, or when an ally who isn't Incapacitated is within 5 feet of the target and you didn't have disadvantage.`);
+    const rd=sc("Rage Damage");if(rd&&ab==="str")dn.push(`While raging: add ${rd} damage (Strength attacks).`);
+    if((s.fstyles||[]).includes("Great Weapon Fighting")&&(two||(a.props||[]).includes("Two-Handed")))dn.push("Great Weapon Fighting: any 1 or 2 on a damage die counts as a 3.");
+    if(c.has("Savage Attacker")&&!a.unarmed)dn.push("Savage Attacker: once per turn, roll the weapon's damage dice twice and use either total.");
+    const kn=knownSpells().map(k=>k.n);if(kn.includes("Hunter's Mark"))dn.push("Hunter's Mark: add 1d6 Force damage if the target is marked.");if(kn.includes("Hex"))dn.push("Hex: add 1d6 Necrotic damage if the target is hexed.");
+    if(kn.includes("Divine Smite"))dn.push("Divine Smite: after you hit with a melee weapon or Unarmed Strike, you can cast it as a Bonus Action for extra Radiant damage.");
+    (a.props||[]).filter(p=>/^\+\d|Lifedrinker|damage when thrown/.test(p)).forEach(p=>dn.push(p));
+    const flat=!/d/.test(die);
+    return rollBox(`${a.name}: damage${two?" (two hands)":""}`,flat?`<b>${diceTxt(die,mm)} ${esc(a.type)}</b> damage, no roll needed`:`Roll <b>${diceTxt(die,mm)}</b> ${esc(a.type)}`,
+      flat?"":rollParts([[m,`${AF[ab]} modifier`,1],[two?0:(duel||0),"Dueling fighting style"],[a.magic||0,"magic weapon"]]),
+      flat?"":`Only roll damage after the attack hits. <b>Critical hit:</b> roll the dice twice (extra dice like Sneak Attack double too), <b>${critDie(die)}${mm?` ${mm>0?"+":"−"} ${Math.abs(mm)}`:""}</b>. The number you add stays the same.`,dn);}
+  if(kind==="grapple"){const dc=8+s.pb+s.mods.str;return rollBox("Grapple or shove","<b>You don't roll.</b> The target does.",rollParts([[8,"base"],[s.mods.str,"Strength modifier",1],[pb,"proficiency"]]),`Use one attack from your Attack action. The target (no more than one size larger than you, within reach) makes a Strength or Dexterity save, its choice, against <b>DC ${dc}</b>. If it fails, it's Grappled by you (you need a free hand), or you push it 5 feet away or knock it Prone.`,[]);}
+  if(kind==="death"){const au=s.aura||0,tot=au-ex;const n=d20Notes(c,"death","none");if(c.has("Durable"))n.unshift("Durable: advantage on death saves.");
+    return rollBox("Death saving throw",`Roll <b>1d20${tot?` ${sgnB(tot)}`:""}</b>${tot?"":", nothing added"}`,au||ex?rollParts([[au,"Aura of Protection"],exP]):"",`At the start of each of your turns at 0 HP. <b>10 or higher:</b> a success. <b>9 or lower:</b> a failure. Three successes and you're stable; three failures and you die. A <b>20</b> on the die: you get back 1 hit point and wake up. A <b>1</b>: two failures. Taking damage at 0 HP is one failure (two from a critical hit). Any healing wakes you up.`,n);}
+  if(kind==="hd"){const list=s.multi?s.hd:[{die:+String(s.die).slice(1),n:s.level}],con=s.mods.con;
+    return rollBox("Spending Hit Dice",list.map(h=>`Roll <b>1d${h.die} ${sgnB(con)}</b> per d${h.die}${con<0?" (at least 1 each)":""}`).join("<br>"),rollParts([[con,"Constitution modifier, added to each die",1]]),`On a short rest, spend as many Hit Dice as you like, one at a time, and heal the total each time (always at least 1 hit point per die). Mark them used above; they all come back on a long rest.`,[]);}
+  if(kind==="breath"){const b=s.breath;return rollBox("Breath Weapon",`Roll <b>${b.dmg}</b> ${esc(b.type)} damage`,"",`You don't make an attack roll. Everyone in the 15-foot cone or 30-foot line makes a Dexterity save against your <b>DC ${b.dc}</b> (8 + Constitution modifier + proficiency). They take the full damage on a failure, half on a success.`,[]);}
+  if(kind==="spelldc"||kind==="spellatk"){const ab=arg0||s.caster.cast||(s.casters&&s.casters[0]&&s.casters[0].cast);if(!ab||s.mods[ab]==null)return "";const m=s.mods[ab],dc=8+pb+m+(ab===(s.caster&&s.caster.cast)?(s.itemSpellDC||0):0),atk=pb+m+(s.itemSpellAtk||0)-ex;
+    if(kind==="spelldc")return rollBox("Spell save DC","<b>You don't roll.</b> Your targets do.",rollParts([[8,"base"],[m,`${AF[ab]} modifier`,1],[pb,"proficiency"],[dc-8-m-pb,"a magic item"]]),`When a spell calls for a saving throw, each target rolls the save named by the spell and needs <b>${dc}</b> or higher to resist it.`,[]);
+    return rollBox("Spell attack",`Roll <b>1d20 ${sgnB(atk)}</b>`,rollParts([[m,`${AF[ab]} modifier`,1],[pb,"proficiency"],[s.itemSpellAtk||0,"a magic item"],exP]),`For spells that say "make a spell attack". Meet or beat the target's Armor Class to hit. A 20 on the die is a critical hit (roll the spell's damage dice twice); a 1 always misses.`,d20Notes(c,"atk",ab),ADV_TXT(sgnB(atk)));}
+  if(kind==="spell"){const [nm,abx]=arg0.split("|"),sp=SP_BY[nm];if(!sp)return "";const k=knownSpells().find(x=>x.n===nm&&(!abx||x.ab===abx))||{n:nm,ab:abx};
+    const ab=k.ab||(s.caster&&s.caster.cast)||"int",m=s.mods[ab],dc=8+pb+m+(ab===(s.caster&&s.caster.cast)?(s.itemSpellDC||0):0),atk=pb+m+(s.itemSpellAtk||0)-ex;
+    const how=[];let big="";
+    if(sp.a){big=`Spell attack: roll <b>1d20 ${sgnB(atk)}</b>`;how.push(`Meet or beat the target's Armor Class to hit (${esc(AF[ab])} ${fmt(m)}, proficiency ${fmt(pb)}${s.itemSpellAtk?`, item ${fmt(s.itemSpellAtk)}`:""}${ex?`, Exhaustion −${ex}`:""}).`);}
+    if(sp.sv){big=big||`<b>You don't roll to hit.</b> Targets make a ${esc(sp.sv)} save against <b>DC ${dc}</b>`;if(sp.a)how.push(`Targets also make a ${esc(sp.sv)} save against DC ${dc}.`);else how.push(`Your DC is 8 + ${esc(AF[ab])} ${fmt(m)} + proficiency ${fmt(pb)}${dc-8-m-pb?` + item ${fmt(dc-8-m-pb)}`:""}.`);}
+    const line=spellLine(k,s),dmg=(line.match(/(\d+d\d+(?:[+−-]\d+)?(?: each)?) ([A-Za-z]+)(?: \+ (\d+d\d+) ([a-z]+))?$/)||[]);
+    if(sp.dm&&dmg[1]){how.push(`Damage${sp.sv&&!sp.a?" on a failed save":""}: roll <b>${esc(dmg[1].replace(/([+−-])(\d+)/," $1 $2"))}</b> ${esc(dmg[2])}${dmg[3]?` plus ${esc(dmg[3])} ${esc(dmg[4])}`:""}.${sp.a?` On a critical hit, roll the damage dice twice.`:""}${sp.sv&&/half as much damage|takes? half (?:the |that )?damage|half damage/i.test(sp.x)?" A target that succeeds on the save takes half damage.":""}`);if(!big)big=`Roll <b>${esc(dmg[1])}</b> ${esc(dmg[2])} damage`;}
+    const heal=/(\d+d\d+) plus your spellcasting ability modifier/i.exec(sp.x||"");if(heal){how.push(`Healing: roll <b>${heal[1]} ${sgnB(m)}</b> (your ${esc(AF[ab])} modifier).`);if(!big)big=`Roll <b>${heal[1]} ${sgnB(m)}</b> healing`;}
+    if(!heal&&/spellcasting ability modifier/i.test(sp.x||""))how.push(`Where the spell says "your spellcasting ability modifier", that's <b>${fmt(m)}</b> (${esc(AF[ab])}).`);
+    if(!big)big=/\d+d\d+/.test(sp.x||"")?"Check the description for the dice to roll":"<b>No roll needed</b> to cast it";
+    const notes=[];if(sp.cc)notes.push("Concentration: it ends if you cast another Concentration spell, or fail a Constitution save after taking damage (DC 10 or half the damage, whichever is higher).");
+    if(sp.h)notes.push(`With a higher-level slot: ${sp.h}`);if(k.free)notes.push(`You can cast it ${k.free.replace("/LR"," time(s) per long rest").replace("/SR"," time(s) per short rest")} without a slot (${k.src||"feature"}).`);
+    return rollBox(`${sp.n} (${sp.l?`level ${sp.l}`:"cantrip"})`,big,"",`${how.join(" ")}<br><span class="muted">${esc(sp.t)}${sp.tr?`, ${esc(sp.tr)}`:""} · ${esc(sp.r)} · ${esc(sp.v)} · ${esc(sp.d)}</span>`,notes,`<details class="rdesc"><summary>Full description</summary><p>${esc(sp.x).replace(/\n/g,"<br>")}</p></details>`);}
+  return "";}
+function sgnB(n){return n<0?`− ${Math.abs(n)}`:`+ ${n}`;}
+function showRoll(key){let html="";try{html=rollInfo(key);}catch(e){html="";}if(!html)return;
+  $("roll_body").innerHTML=html;const d=$("rollbox");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");$("roll_x").focus();}
+function closeRoll(){const d=$("rollbox");if(d.close)d.close();else d.removeAttribute("open");}
+// mark the numbers on the live sheet that can be tapped
+function annotateRolls(doc){const s=playAdjust(snapshot()),mark=(el,key)=>{if(!el||el.dataset.roll)return;el.dataset.roll=key;el.classList.add("rl");el.setAttribute("role","button");el.tabIndex=0;};
+  doc.querySelectorAll(".abil .ab").forEach((ab,i)=>{const a=AB[i];mark(ab.querySelector(".m"),"check:"+a);mark(ab.querySelector(".sv"),"save:"+a);});
+  const vit=doc.querySelectorAll(".vitals .vital");mark(vit[3]&&vit[3].querySelector("b"),"init");mark(vit[2]&&vit[2].querySelector("b"),"hd");
+  const tabAfter=t=>{const h=[...doc.querySelectorAll("h2")].find(x=>x.textContent.trim()===t);let n=h&&h.nextElementSibling;while(n&&n.tagName!=="TABLE")n=n.nextElementSibling;return n;};
+  const sk=tabAfter("Skills");if(sk)[...sk.rows].forEach((tr,i)=>{const x=s.skills[i];if(x)mark(tr.cells[1],"skill:"+x.name);});
+  const at=tabAfter("Attacks");if(at)[...at.rows].slice(1).forEach((tr,i)=>{if(!s.attacks[i])return;mark(tr.cells[1],"atk:"+i);mark(tr.cells[2],s.attacks[i].vers?"dmg:"+i:"dmg:"+i);});
+  doc.querySelectorAll(".dsbox .lblx").forEach(el=>mark(el,"death"));doc.querySelectorAll(".hdbox .lblx").forEach(el=>mark(el,"hd"));
+  doc.querySelectorAll("dl.kv dt").forEach(dt=>{const t=dt.textContent,dd=dt.nextElementSibling;if(t==="Spell save DC")mark(dd,"spelldc:");else if(t==="Spell attack")mark(dd,"spellatk:");
+    else{const mm=/^(.*) spells$/.exec(t);if(mm&&s.multi){const k=(s.casters||[]).find(x=>x.cls===mm[1]);if(k)mark(dd,"spellatk:"+k.cast);}}});
+  const kn=knownSpells();doc.querySelectorAll("table.spt tr").forEach(tr=>{if(tr.classList.contains("lvh"))return;const b=tr.cells[0]&&tr.cells[0].querySelector("b");if(!b)return;const k=kn.find(x=>x.n===b.textContent);if(k)mark(b,`spell:${k.n}|${k.ab||""}`);});
+  if(!doc.getElementById("rlcss")){const st=doc.createElement("style");st.id="rlcss";st.textContent=".rl{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:#8a6a3a}.rl:hover,.rl:focus{background:#f3e7cc;outline:none;border-radius:3px}";doc.head.appendChild(st);}}
 
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
