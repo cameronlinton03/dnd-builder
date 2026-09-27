@@ -374,8 +374,8 @@ body.compact #dm_close{display:none}
       <button type="button" class="ghost" id="r_new">New character</button>
       <button type="button" id="qb_btn">Quick build</button>
       <button type="button" class="ghost" id="idea_btn" title="A random character concept to spark ideas: species, class, background, personality, goals and story">Inspire me</button>
-      <button type="button" class="ghost dmonly" id="dm_btn" aria-pressed="false">DM view</button>
-      <button type="button" class="ghost" id="view_btn" aria-pressed="false" title="Shows or hides the DM-only tools: NPC stat blocks, challenge rating, the NPC deck and the DM view">Show DM tools</button>
+      <button type="button" class="ghost dmonly" id="dm_btn" aria-pressed="false" title="Your campaign: the party, initiative tracker, NPCs and creatures">Campaign</button>
+      <button type="button" class="ghost" id="view_btn" aria-pressed="false" title="Shows or hides the DM-only tools: NPC stat blocks, challenge rating, the NPC deck and the Campaign screen">Show DM tools</button>
       <button type="button" class="ghost ononly" id="r_toggle" aria-expanded="false" aria-controls="roster">My characters</button>
     </div>
   </div>
@@ -398,7 +398,7 @@ body.compact #dm_close{display:none}
   </div>
 </section>
 
-<section id="dmv" class="wrap" hidden aria-label="DM view"></section>
+<section id="dmv" class="wrap" hidden aria-label="Campaign"></section>
 <input type="file" id="dm_import" accept=".json,application/json" hidden>
 <div class="wrap"><nav id="msteps" aria-label="Steps"></nav><div class="grid">
 <form id="f" autocomplete="off" onsubmit="return false">
@@ -607,7 +607,7 @@ body.compact #dm_close{display:none}
 <dialog id="sbview" aria-labelledby="sb_title"><div class="lvhead"><b id="sb_title">Stat block</b><button type="button" class="ghost sm" id="sb_x" aria-label="Close">×</button></div><iframe id="sb_frame" title="Stat block"></iframe></dialog>
 <dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
-<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">DM</button></nav>
+<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">Campaign</button></nav>
 <footer style="max-width:1240px;margin:0 auto;padding:0 16px 2rem;font-size:.74rem;color:var(--ink-soft)">Rules text and spells are from the System Reference Document 5.2 by Wizards of the Coast LLC (dndbeyond.com/srd), licensed CC BY 4.0. Spell data compiled by the 5e-bits/5e-database project (MIT licence).</footer>
 
 <script>
@@ -3927,7 +3927,7 @@ function renderDM(){const box=$("dmv");if(!box||box.hidden)return;const e=esc;
   const online=RS.db&&RS.charsLoaded,camp=DMV.camp??(S.campaign||"");
   const party=dmParty(),ms=party.map(ch=>{try{return dmModel(ch);}catch(err){return null;}}).filter(Boolean),pcs=ms.filter(m=>m.kind!=="npc");
   const fa=document.activeElement,focus=fa&&fa.dataset&&$("dmv").contains(fa)?{amt:fa.dataset.amt,famt:fa.dataset.famt,finit:fa.dataset.finit,mf:fa.dataset.mf,val:fa.value}:null;
-  let h=`<div class="dmtop"><h2>DM view</h2><button type="button" class="ghost sm" id="dm_close">Back to the builder</button></div>`;
+  let h=`<div class="dmtop"><h2>Campaign</h2><button type="button" class="ghost sm" id="dm_close">Back to the builder</button></div>`;
   if(online) h+=`<div class="dmfilters"><label for="dm_camp">Campaign</label><select id="dm_camp">${[["","No campaign"],...RS.camps.map(c=>[c.id,c.name])].map(([v,t])=>`<option value="${e(v)}"${v===camp?" selected":""}>${e(t)}</option>`).join("")}</select>
    <div class="dmtabs" role="tablist"><button type="button" role="tab" data-dmtab="party" aria-selected="${DMV.tab!=="npcs"}">Party</button><button type="button" role="tab" data-dmtab="npcs" aria-selected="${DMV.tab==="npcs"}">NPCs &amp; creatures</button></div></div>`;
   if(online&&DMV.tab==="npcs"){if(DMV.msg)h+=`<p class="dmmsg" role="status">${DMV.msg}</p>`;if(FIGHT.on)h+=fightHTML(ms);h+=npcTrackerHTML(camp);box.innerHTML=h;dmRefocus(box,fa);return;}
@@ -3970,8 +3970,8 @@ async function dmImportWrite(update){const p=DMV.pend;DMV.pend=null;if(!p||!RS.d
     else{await RS.charCol.doc().set(body);DMV.msg=`Added ${esc(body.name)} to ${esc(campName(p.camp)||"No campaign")}.`;}}
   catch(err){writeErr(err);DMV.msg="Couldn't save that character just now. Try again in a moment.";}
   renderDM();}
-function openDM(){document.body.classList.add("dmmode");$("dmv").hidden=false;$("dm_btn").setAttribute("aria-pressed","true");$("dm_btn").textContent="Close DM view";renderDM();window.scrollTo({top:0});}
-function closeDM(){document.body.classList.remove("dmmode");$("dmv").hidden=true;$("dm_btn").setAttribute("aria-pressed","false");$("dm_btn").textContent="DM view";schedulePreview(true);if(typeof MB!=="undefined"&&MB.on&&MB.tab==="dm")mTab("build",true);}
+function openDM(){document.body.classList.add("dmmode");$("dmv").hidden=false;$("dm_btn").setAttribute("aria-pressed","true");$("dm_btn").textContent="Back to the builder";renderDM();window.scrollTo({top:0});}
+function closeDM(){document.body.classList.remove("dmmode");$("dmv").hidden=true;$("dm_btn").setAttribute("aria-pressed","false");$("dm_btn").textContent="Campaign";schedulePreview(true);if(typeof MB!=="undefined"&&MB.on&&MB.tab==="dm")mTab("build",true);}
 $("dm_btn").addEventListener("click",()=>{const open=document.body.classList.contains("dmmode");if(typeof MB!=="undefined"&&MB.on){mTab(open?"build":"dm");return;}open?closeDM():openDM();});
 $("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.fx){fightClick(b,dmModels());return;}
   if(b.dataset.dmtab){DMV.tab=b.dataset.dmtab;DMV.msg="";try{localStorage.setItem("ledger_dmtab",DMV.tab);}catch(x){}renderDM();return;}
