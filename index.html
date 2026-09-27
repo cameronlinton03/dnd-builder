@@ -535,7 +535,7 @@ body.compact #dm_close{display:none}
       <label><input type="radio" name="mode" value="npc"><span>NPC</span></label>
     </div>
     <button type="button" class="ghost sm" id="play_btn" aria-pressed="false">Play mode</button>
-    <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto"><input type="checkbox" id="tips"> Beginner notes</label>
+    <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto" title="Shows the explanations: what each number means, the On your turn panel, and how levelling up works"><input type="checkbox" id="tips"> Learning mode</label>
     <span class="dlgrp"><button type="button" class="alt" id="dl_btn" data-share="1">Share</button></span>
   </div>
   <iframe id="frame" title="Character sheet preview"></iframe>
@@ -2404,7 +2404,7 @@ function sheetHTML(mode,forPreview,live){
 ${tipsHTML(s,"vitals")}
 ${playPanelHTML(s,live)}
 ${resourcesHTML(s,live)}
-${turnHTML(s,live)}
+${S.tips!==false?turnHTML(s,live):""}
 <h2>Abilities and saving throws</h2>${abil}${s.aura?`<p class="muted" style="margin:4px 0 0">Saves include Aura of Protection (${fmt(s.aura)}).</p>`:""}${tipsHTML(s,"abil")}
 <div class="cols"><div>
 <h2>Attacks</h2><table><tr><th>Weapon</th><th style="text-align:right">Hit</th><th>Damage</th><th>Notes</th></tr>${atkRows}</table>${tipsHTML(s,"attacks")}
@@ -2424,12 +2424,12 @@ ${inventorySheetHTML(s,live)}
 ${S.gear?`<h2>${(S.items||[]).length?"Other gear":"Equipment"}</h2><p class="pre">${e(S.gear)}</p>`:""}
 ${[["Appearance",S.appearance],["Personality",S.personality],["Goals",S.goals],["Secret",S.secret],["Backstory",S.notes]].filter(([,v])=>v&&v.trim()).map(([k,v])=>`<h2>${k}</h2><p class="pre">${e(v)}</p>`).join("")}
 <h2>Levelling up</h2>
-<div class="how"><b>Each time you gain a level</b><ol>
+${S.tips===false?"":`<div class="how"><b>Each time you gain a level</b><ol>
 <li>Add the hit points listed for that level. Your hit dice go up by one ${s.multi?"die of the class that gains the level":s.die}.${extraHp.length?` The number already includes ${e(extraHp.join(" and "))}.`:""}</li>
 <li>Add the new features. Look up anything that says "see your Player's Handbook."</li>
 <li>If your proficiency bonus rises, update proficient saves and skills, attack bonuses and spell save DC.</li>
 <li>If you raise Constitution, recalculate HP for every level, not just the new one.</li>
-</ol></div>
+</ol></div>`}
 ${nextHtml}${laterHtml}
 ${spellAppendix()}`;
   }
@@ -4143,7 +4143,7 @@ function d20Notes(c,kind,abil,skill){const s=c.s,out=[];
   if(c.has("Lucky"))out.push("Lucky (feat): spend a Luck Point to give yourself advantage.");
   if(S.track.insp)out.push("You have Heroic Inspiration: after rolling any die, you can spend it to reroll that die, and you must use the new roll.");
   return out.concat(condNotes(c,kind,abil));}
-const ADV_TXT=b=>`<p class="rsm"><b>Advantage:</b> roll two d20s, keep the higher, then add ${b}. <b>Disadvantage:</b> keep the lower. If you have both, they cancel out: roll one. Bonus dice someone gives you (like Bless, Guidance or Bardic Inspiration) are rolled and added too.</p>`;
+const ADV_TXT=b=>S.tips===false?"":`<p class="rsm"><b>Advantage:</b> roll two d20s, keep the higher, then add ${b}. <b>Disadvantage:</b> keep the lower. If you have both, they cancel out: roll one. Bonus dice someone gives you (like Bless, Guidance or Bardic Inspiration) are rolled and added too.</p>`;
 function rollBox(title,big,parts,what,notes,extra){return `<h3 class="rt">${esc(title)}</h3><p class="rbig">${big}</p>${parts?`<ul class="rparts">${parts}</ul>`:""}${what?`<p>${what}</p>`:""}${extra||""}${notes&&notes.length?`<div class="rnotes"><b>Also remember</b><ul>${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`:""}`;}
 const diceTxt=(die,m)=>die==="1"||!/d/.test(die)?`${Math.max(1,(+die||1)+m)}`:`${die}${m?` ${m>0?"+":"−"} ${Math.abs(m)}`:""}`;
 const critDie=d=>String(d).replace(/(\d+)d(\d+)/g,(x,n,f)=>`${2*n}d${f}`);
