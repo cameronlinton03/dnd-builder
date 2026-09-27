@@ -1892,7 +1892,38 @@ $("tips").addEventListener("change",e=>{S.tips=e.target.checked;schedulePreview(
 
 /* ================= SAVE DRAFT (this browser only) ================= */
 function save(){try{localStorage.setItem("ledger_v2",JSON.stringify(S));}catch(e){} if(typeof rosterChanged==="function") rosterChanged();}
-function hydrate(d){const base=defaults();if(!d.dataV&&d.sp==="Aasimar")d={...d,sp:"Aasimar (MotM)"};d={...d,dataV:2};if(Array.isArray(d.mc))d={...d,mc:d.mc.filter(m=>m&&CLASSES[m.cls]).map(m=>({cls:m.cls,level:Math.max(1,Math.min(19,+m.level||1)),sub:m.sub||"",subOther:m.subOther||"",opts:{...(m.opts||{})},asi:Array.isArray(m.asi)?m.asi:[],asiFeat:Array.isArray(m.asiFeat)?m.asiFeat:[]}))};return {...base,...d,cc:{...base.cc,...(d.cc||{})},spc:{...base.spc,...(d.spc||{})},bgc:{...base.bgc,...(d.bgc||{})},opts:{...(d.opts||{})},spells:{...base.spells,...(d.spells||{}),pick:{...((d.spells&&d.spells.pick)||{})}},track:{...base.track,...(d.track||{})}};}
+// Make a loaded character safe to use: every field gets the type the builder expects (a damaged or hand-edited file
+// falls back to the default for that field instead of breaking the page).
+function fixTypes(v,b){
+  if(Array.isArray(b))return Array.isArray(v)?v:b.slice();
+  if(b===null)return typeof v==="number"&&isFinite(v)?v:null;
+  if(typeof b==="object"){const o=v&&typeof v==="object"&&!Array.isArray(v)?v:{};const out={...o};Object.keys(b).forEach(k=>out[k]=fixTypes(o[k],b[k]));return out;}
+  if(typeof b==="string")return typeof v==="string"?v:typeof v==="number"&&isFinite(v)?String(v):b;
+  if(typeof b==="number"){const n=typeof v==="string"&&v.trim()!==""?+v:v;return typeof n==="number"&&isFinite(n)?n:b;}
+  if(typeof b==="boolean")return typeof v==="boolean"?v:b;
+  return v===undefined?b:v;}
+function sanitizeState(s){const base=defaults();s=fixTypes(s,base);
+  const oneOf=(k,ok)=>{if(!ok(s[k]))s[k]=base[k];};
+  oneOf("cls",v=>v==="Other"||!!CLASSES[v]);oneOf("sp",v=>v==="Other"||!!SPECIES[v]);oneOf("bg",v=>v==="Other"||!!BACKGROUNDS[v]);
+  oneOf("mode",v=>v==="pc"||v==="npc");oneOf("kind",v=>v==="pc"||v==="npc");oneOf("bgmode",v=>v==="21"||v==="111");
+  oneOf("method",v=>["array","buy","roll"].includes(v));oneOf("pronoun",v=>["they","she","he","it"].includes(v));oneOf("cr",v=>v===""||v in CR_XP);
+  s.level=Math.max(1,Math.min(20,Math.round(s.level)||1));
+  const strs=a=>a.filter(x=>typeof x==="string");
+  ["spSkills","inv","invX","classSkills","extraSkills","expertise","weapons","mastery"].forEach(k=>s[k]=k==="invX"||k==="inv"?s[k].map(x=>typeof x==="string"?x:""):strs(s[k]));
+  s.asi=s.asi.map(p=>Array.isArray(p)?p.map(x=>typeof x==="string"?x:""):["",""]);
+  s.asiFeat=s.asiFeat.map(x=>x&&typeof x==="object"&&!Array.isArray(x)?x:{});
+  s.items=s.items.filter(x=>x&&typeof x==="object"&&!Array.isArray(x));
+  const strMap=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>typeof v==="string"));
+  const numMap=o=>Object.fromEntries(Object.entries(o).filter(([,v])=>typeof v==="number"&&isFinite(v)));
+  s.opts=strMap(s.opts);s.lang=strMap(s.lang);s.scores=numMap(s.scores);s.hpRolls=numMap(s.hpRolls);
+  s.spells.pick=Object.fromEntries(Object.entries(s.spells.pick).filter(([,v])=>Array.isArray(v)).map(([k,v])=>[k,strs(v)]));
+  s.mcSkills=Object.fromEntries(Object.entries(s.mcSkills).filter(([,v])=>Array.isArray(v)).map(([k,v])=>[k,strs(v)]));
+  const t=s.track;t.slots=numMap(t.slots);t.used=numMap(t.used);t.res=numMap(t.res);t.cond=strs(t.cond);
+  t.ds=Array.isArray(t.ds)&&t.ds.length===2?t.ds.map(x=>Math.max(0,Math.min(3,+x||0))):[0,0];if(t.hdd!==undefined&&(typeof t.hdd!=="object"||!t.hdd||Array.isArray(t.hdd)))t.hdd={};
+  s.money=numMap(s.money);["pp","gp","ep","sp","cp"].forEach(k=>{if(s.money[k]===undefined)s.money[k]=0;});
+  return s;}
+const obj=v=>v&&typeof v==="object"&&!Array.isArray(v)?v:{};
+function hydrate(d){if(!d||typeof d!=="object"||Array.isArray(d))d={};const base=defaults();if(!d.dataV&&d.sp==="Aasimar")d={...d,sp:"Aasimar (MotM)"};d={...d,dataV:2};if(Array.isArray(d.mc))d={...d,mc:d.mc.filter(m=>m&&CLASSES[m.cls]).map(m=>({cls:m.cls,level:Math.max(1,Math.min(19,+m.level||1)),sub:m.sub||"",subOther:m.subOther||"",opts:{...(m.opts||{})},asi:Array.isArray(m.asi)?m.asi:[],asiFeat:Array.isArray(m.asiFeat)?m.asiFeat:[]}))};return sanitizeState({...base,...d,cc:{...base.cc,...obj(d.cc)},spc:{...base.spc,...obj(d.spc)},bgc:{...base.bgc,...obj(d.bgc)},opts:{...obj(d.opts)},spells:{...base.spells,...obj(d.spells),pick:{...obj(d.spells&&d.spells.pick)}},track:{...base.track,...(d.track&&typeof d.track==="object"?d.track:{})}});}
 function load(){try{const raw=localStorage.getItem("ledger_v2");if(raw){S=hydrate(JSON.parse(raw));return true;}}catch(e){}return false;}
 
 /* ================= EXPORTED SHEET ================= */
