@@ -128,6 +128,10 @@ dialog#rollbox{max-width:460px;width:94vw;max-height:86vh;overflow:auto;border:1
 .inspbox{display:flex;flex-direction:column;gap:.3rem;margin:.35rem 0 .2rem;padding:.5rem .6rem;border:1px dashed var(--line);border-radius:var(--radius);background:var(--panel)}.insph{font-size:.78rem;color:var(--ink-soft)}
 .inspbox .inspopt{text-align:left;font-weight:500;color:var(--ink);white-space:normal;line-height:1.35;padding:.45rem .6rem}.inspf{display:flex;gap:.3rem;justify-content:flex-end}.inspf .xs{margin-left:0}
 button.xs{font-size:.7rem;padding:.08rem .45rem;margin-left:.35rem;vertical-align:1px;font-weight:600}
+dialog#idea{max-width:560px;width:94vw;max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}dialog#idea::backdrop{background:rgba(20,16,10,.45)}
+#idea_body{padding:.5rem 1rem .6rem}.idh{font-family:'Spectral',serif;font-size:1.35rem;font-weight:700;margin:.1rem 0 0}.ids{color:var(--ink-soft);margin:0 0 .6rem}
+.idl{display:grid;grid-template-columns:5.6rem minmax(0,1fr) auto;gap:.2rem .6rem;align-items:start;padding:.4rem 0;border-top:1px solid var(--line)}.idl .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding-top:.15rem}.idl .v{line-height:1.4}
+.idhint{font-size:.8rem;color:var(--ink-soft);margin:.5rem 0 0}
 dialog#rollbox::backdrop{background:rgba(20,16,10,.45)}
 #roll_body{padding:.4rem 1rem 1rem;font-size:.92rem}#roll_body .rt{font-size:1.05rem;margin:.2rem 0 .3rem}
 #roll_body .rbig{font-size:1.15rem;margin:.2rem 0 .5rem;padding:.55rem .7rem;background:var(--parchment-dim);border-left:3px solid var(--legend);border-radius:3px}
@@ -348,6 +352,7 @@ body.compact #dm_close{display:none}
       <button type="button" class="ghost" id="lv_btn">Level up</button>
       <button type="button" class="ghost" id="r_new">New character</button>
       <button type="button" id="qb_btn">Quick build</button>
+      <button type="button" class="ghost" id="idea_btn" title="A random character concept to spark ideas: species, class, background, personality, goals and story">Inspire me</button>
       <button type="button" class="ghost dmonly" id="dm_btn" aria-pressed="false">DM view</button>
       <button type="button" class="ghost" id="view_btn" aria-pressed="false" title="Shows or hides the DM-only tools: NPC stat blocks, challenge rating, the NPC deck and the DM view">Show DM tools</button>
       <button type="button" class="ghost ononly" id="r_toggle" aria-expanded="false" aria-controls="roster">My characters</button>
@@ -556,6 +561,7 @@ body.compact #dm_close{display:none}
   <div><label for="qb_lv">Level</label><div class="qbpick"><select id="qb_lv"></select><button type="button" class="ghost sm" data-qbr="lv" aria-label="Random level" title="Random level">Random</button></div></div>
  </div>
  <button type="button" class="ghost sm" id="qb_rall" style="margin-top:.5rem">Randomize all four</button>
+ <button type="button" class="ghost sm" id="qb_idea" style="margin:.6rem 0 0">Inspire me: a whole character idea</button>
  <details class="qbabout" open><summary><b>About the character</b> <span class="small">(optional; fill in whatever you know)</span></summary>
   <div class="seg dmonly" role="radiogroup" aria-label="Character type" style="margin:.5rem 0"><label><input type="radio" name="qb_kind" value="pc" checked><span>Player character</span></label><label><input type="radio" name="qb_kind" value="npc"><span>NPC</span></label></div>
   <div class="npcdeck dmonly"><b>NPC deck</b><button type="button" class="sm" data-npcdraw="all" data-scope="qb">Draw a whole NPC</button><button type="button" class="ghost sm" data-npcdraw="quirk" data-scope="qb" title="Adds an oddly specific quirk to Personality">Add a quirk</button><button type="button" class="ghost sm" id="npcdeck_shuffle">Reshuffle</button><span id="npcdeck_left" class="small muted"></span><p class="hint">Draws a name, role, look, personality, voice, goal, secret and backstory seed from fixed decks of cards (nothing is written by AI). Or use Draw next to any single field. <b>Add a quirk</b> tacks something oddly specific onto Personality; quirks are never part of a whole-NPC draw. You won't see a repeat until a deck runs out.</p></div>
@@ -575,6 +581,8 @@ body.compact #dm_close{display:none}
 </div>
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
+<dialog id="idea" aria-labelledby="idea_title"><div class="lvhead"><b id="idea_title">Character idea</b><button type="button" class="ghost sm" id="idea_x" aria-label="Close">×</button></div><div id="idea_body"></div>
+<div class="lvfoot"><button type="button" class="ghost sm" id="idea_again">Another one</button><button type="button" class="ghost sm" id="idea_use" title="Fill in the name and details in step 8">Use the details</button><button type="button" class="sm" id="idea_build" title="Open Quick build with this species, class, background and details">Build it</button></div></dialog>
 <dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
 <nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">DM</button></nav>
@@ -4314,6 +4322,42 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
   if(b.dataset.inspclose){b.closest(".inspbox").remove();return;}
   if(b.dataset.inspick){const el=$(b.dataset.inspick),v=b.textContent;el.value=el.id.endsWith("name")?v:(el.value.trim()?el.value.trim()+" ":"")+v;el.dispatchEvent(new Event("input",{bubbles:true}));const box=b.closest(".inspbox");if(box)box.remove();el.focus();return;}
   inspOpen(b);},true);
+
+/* ---------- Inspire me: one card from each deck, as a whole character concept (no numbers, nothing saved) ---------- */
+const IDEA={};
+const pick1=l=>l[Math.floor(Math.random()*l.length)];
+function ideaRoll(k){const D=NPC_DECK,ok=l=>l.filter(x=>!INSP_SKIP.test(x));
+  if(k==="sp")IDEA.sp=pick1(Object.keys(SPECIES));
+  if(k==="cls")IDEA.cls=pick1(Object.keys(CLASSES).filter(c=>c!=="Other"));
+  if(k==="bg")IDEA.bg=pick1(Object.keys(BACKGROUNDS).filter(b=>b!=="Other"));
+  if(k==="name")IDEA.name=inspName(IDEA.sp);
+  if(k==="role")IDEA.role=pick1(D.title);
+  if(k==="look")IDEA.look=pick1(D.appearance);
+  if(k==="pers")IDEA.pers=`${pick1(D.temperament)}; ${pick1(D.mannerism)}. Voice: ${pick1(D.voice).toLowerCase()}`;
+  if(k==="goal")IDEA.goal=pick1(ok(D.goal));
+  if(k==="secret")IDEA.secret=pick1(ok(D.secret));
+  if(k==="story")IDEA.story=pick1(D.backstory);
+  if(k==="quirk")IDEA.quirk=pick1(D.quirk);}
+function ideaNew(){["sp","cls","bg","name","role","look","pers","goal","secret","story","quirk"].forEach(ideaRoll);ideaRender();}
+function ideaRender(){const e=esc,an=w=>/^[AEIOU]/i.test(w)?"An":"A";
+  const line=(k,label,v)=>`<div class="idl"><span class="k">${label}</span><span class="v">${e(v)}</span><button type="button" class="ghost xs" data-idswap="${k}" aria-label="Swap ${label.toLowerCase()}">Swap</button></div>`;
+  $("idea_body").innerHTML=`<div class="idl" style="border-top:0"><span class="k">Who</span><span class="v"><span class="idh">${e(IDEA.name)}</span><br><span class="ids">${an(IDEA.sp)} ${e(IDEA.sp)} ${e(IDEA.cls)} with the ${e(IDEA.bg)} background</span></span><span style="display:flex;flex-direction:column;gap:.25rem"><button type="button" class="ghost xs" data-idswap="name">Name</button><button type="button" class="ghost xs" data-idswap="sp">Species</button><button type="button" class="ghost xs" data-idswap="cls">Class</button><button type="button" class="ghost xs" data-idswap="bg">Background</button></span></div>
+${line("role","Once was",IDEA.role)}${line("look","Looks",IDEA.look+".")}${line("pers","Personality",IDEA.pers+".")}${line("goal","Wants",IDEA.goal+".")}${line("secret","Secret",IDEA.secret+".")}${line("story","Story",IDEA.story+".")}${line("quirk","Quirk",IDEA.quirk+".")}
+<p class="idhint">Swap any line until something clicks. None of it is binding: take the bits you like and make them yours.</p>`;}
+function ideaOpen(){ideaNew();const d=$("idea");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");d.scrollTop=0;}
+function ideaClose(){const d=$("idea");if(d.close)d.close();else d.removeAttribute("open");}
+function ideaDetails(){return {name:IDEA.name,title:IDEA.role,appearance:IDEA.look+".",personality:`${IDEA.pers}. Quirk: ${IDEA.quirk}.`,goals:IDEA.goal+".",secret:IDEA.secret+".",notes:IDEA.story+"."};}
+$("idea_btn").addEventListener("click",ideaOpen);$("qb_idea").addEventListener("click",()=>{ideaOpen();});
+$("idea_x").addEventListener("click",ideaClose);$("idea").addEventListener("click",e=>{if(e.target===$("idea"))ideaClose();const b=e.target.closest("[data-idswap]");if(!b)return;const k=b.dataset.idswap;ideaRoll(k);if(k==="sp")ideaRoll("name");ideaRender();});
+$("idea_again").addEventListener("click",ideaNew);
+$("idea_use").addEventListener("click",()=>{const d=ideaDetails(),had=Object.keys(d).some(k=>(S[k]||"").trim());
+  if(had&&!confirm("Replace the name and details already in step 8 with this idea?"))return;
+  Object.assign(S,d);syncStatic();renderAll();save();ideaClose();if(typeof MB!=="undefined"&&MB.on){mTab("build");mGo(mSteps().length-1);}
+  rsStatus(`Added ${esc(d.name)}'s details to step 8. Change anything you like.`);});
+$("idea_build").addEventListener("click",()=>{const d=ideaDetails(),keep={...IDEA};ideaClose();const q=$("qb");if(!q.open)openQuickBuild();
+  $("qb_cls").value=keep.cls;$("qb_sp").value=keep.sp;$("qb_bg").value=keep.bg;
+  Object.entries(d).forEach(([k,v])=>{const el=$("qb_"+k);if(el)el.value=v;});
+  const r=document.querySelector('input[name=qb_kind][value="pc"]');if(r&&isPlayerView())r.checked=true;});
 
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
