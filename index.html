@@ -293,7 +293,8 @@ body.offline:not(.pview) .plonly.offshow{display:inline-block!important}
 .dmmsg{margin:.2rem 0 .8rem;font-size:.86rem;}
 .langrow{margin-top:.2rem}.langrow .hint{margin:.2rem 0 0}
 .dmmsg .act,.rb-status .act{margin-left:.3rem;}
-.themepick{position:relative;margin-left:auto;align-self:center}
+.hdrctl{display:flex;gap:.5rem;align-items:center;margin-left:auto;align-self:center}.themepick{position:relative}
+.modeseg{display:flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}.modeseg button{background:transparent;color:var(--ink-soft);border:0;border-radius:0;padding:.3rem .8rem;font-size:.82rem;font-weight:600}.modeseg button+button{border-left:1px solid var(--line)}.modeseg button[aria-pressed="true"]{background:var(--bronze);color:var(--on-accent)}
 #th_panel{position:absolute;right:0;top:calc(100% + .4rem);z-index:40;width:min(21rem,calc(100vw - 32px));background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.25);padding:.8rem}
 #th_panel h3{font-size:.95rem;margin:0 0 .45rem}
 .thgrid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.8rem}
@@ -355,8 +356,10 @@ body.compact #dm_close{display:none}
     <h1>Character Ledger</h1>
     <p>Choose a class, species and background and the rules fill themselves in. The sheet on the right updates as you go, ready to print or share<span class="dmonly">, as a player sheet or an NPC stat block</span>.</p>
   </div>
+  <div class="hdrctl"><div class="modeseg" role="group" aria-label="Builder mode"><button type="button" data-vm="player" aria-pressed="true" title="The standard builder">Player</button><button type="button" data-vm="dm" aria-pressed="false" title="Adds NPC stat blocks, challenge rating, the NPC deck and the Campaign screen">DM</button></div>
   <div class="themepick"><button type="button" class="ghost sm" id="th_btn" aria-expanded="false" aria-controls="th_panel">Theme</button>
     <div id="th_panel" hidden role="dialog" aria-label="Theme"><h3>Colours</h3><div class="thgrid" id="th_grid"></div><h3>Light or dark</h3><div class="thmode" id="th_mode"><button type="button" data-m="auto">Match device</button><button type="button" data-m="light">Light</button><button type="button" data-m="dark">Dark</button></div></div></div>
+</div>
 </div></header>
 <section class="rbar" aria-label="Your characters">
   <div class="inner">
@@ -375,7 +378,6 @@ body.compact #dm_close{display:none}
       <button type="button" id="qb_btn">Quick build</button>
       <button type="button" class="ghost" id="idea_btn" title="A random character concept to spark ideas: species, class, background, personality, goals and story">Inspire me</button>
       <button type="button" class="ghost dmonly" id="dm_btn" aria-pressed="false" title="Your campaign: the party, initiative tracker, NPCs and creatures">Campaign</button>
-      <button type="button" class="ghost" id="view_btn" aria-pressed="false" title="Shows or hides the DM-only tools: NPC stat blocks, challenge rating, the NPC deck and the Campaign screen">Show DM tools</button>
       <button type="button" class="ghost ononly" id="r_toggle" aria-expanded="false" aria-controls="roster">My characters</button>
     </div>
   </div>
@@ -4611,10 +4613,10 @@ let VIEW_SAVED=null;try{VIEW_SAVED=localStorage.getItem("ledger_view");}catch(e)
 document.body.classList.toggle("pview",VIEW_SAVED!=="dm");
 function setView(v,persist){const p=v!=="dm";document.body.classList.toggle("pview",p);
   if(p&&document.body.classList.contains("dmmode"))closeDM();
-  $("view_btn").textContent=p?"Show DM tools":"Hide DM tools";$("view_btn").setAttribute("aria-pressed",String(!p));
+  document.querySelectorAll("[data-vm]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.vm===(p?"player":"dm"))));
   if(persist){VIEW_SAVED=p?"player":"dm";try{localStorage.setItem("ledger_view",VIEW_SAVED);}catch(e){}}
   syncTips();renderRosterBar();schedulePreview(true);if(MB.on&&p&&MB.tab==="dm")mTab("build");}
-$("view_btn").addEventListener("click",()=>setView(isPlayerView()?"dm":"player",true));
+document.querySelectorAll("[data-vm]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.vm===(isPlayerView()?"player":"dm"))return;setView(b.dataset.vm,true);}));
 
 /* ================= START ================= */
 initStatic();
