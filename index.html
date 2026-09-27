@@ -4357,7 +4357,7 @@ $("idea_use").addEventListener("click",()=>{const d=ideaDetails(),had=Object.key
 $("idea_build").addEventListener("click",()=>{const d=ideaDetails(),keep={...IDEA};ideaClose();const q=$("qb");if(!q.open)openQuickBuild();
   $("qb_cls").value=keep.cls;$("qb_sp").value=keep.sp;$("qb_bg").value=keep.bg;
   Object.entries(d).forEach(([k,v])=>{const el=$("qb_"+k);if(el)el.value=v;});
-  const r=document.querySelector('input[name=qb_kind][value="pc"]');if(r&&isPlayerView())r.checked=true;});
+  const r=document.querySelector('input[name=qb_kind][value="pc"]');if(r)r.checked=true;});
 
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
