@@ -549,7 +549,7 @@ body.compact #dm_close{display:none}
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>🎲 Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
-<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build"><span class="i" aria-hidden="true">✎</span>Build</button><button type="button" role="tab" data-tab="sheet"><span class="i" aria-hidden="true">▤</span>Sheet</button><button type="button" role="tab" data-tab="play"><span class="i" aria-hidden="true">⚔</span>Play</button><button type="button" role="tab" data-tab="dm" class="dmonly"><span class="i" aria-hidden="true">♜</span>DM</button></nav>
+<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build"><span class="i" aria-hidden="true">✎</span>Build</button><button type="button" role="tab" data-tab="sheet"><span class="i" aria-hidden="true">▤</span>Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly"><span class="i" aria-hidden="true">♜</span>DM</button></nav>
 <div class="viewsw" id="viewsw"><span>Showing: <span class="vtag" id="view_tag">Player view</span></span><button type="button" class="ghost sm" id="view_btn" aria-pressed="false">Show DM tools</button><span class="small" id="view_note"></span></div>
 <footer style="max-width:1240px;margin:0 auto;padding:0 16px 2rem;font-size:.74rem;color:var(--ink-soft)">Rules text and spells are from the System Reference Document 5.2 by Wizards of the Coast LLC (dndbeyond.com/srd), licensed CC BY 4.0. Spell data compiled by the 5e-bits/5e-database project (MIT licence).</footer>
 
@@ -3068,8 +3068,12 @@ function drawPreview(){
   doc.open();doc.write(sheetHTML(sheetMode(),true));doc.close();
   if(sheetMode()==="pc")bindSheet(doc);
   fr.contentWindow.scrollTo(0,y);
-  if(window.innerWidth<960){setTimeout(()=>{try{fr.style.height=(doc.documentElement.scrollHeight+4)+"px";}catch(e){}},60);}
+  if(window.innerWidth<960){fitFrame();setTimeout(fitFrame,60);setTimeout(fitFrame,600);try{doc.fonts&&doc.fonts.ready.then(fitFrame);}catch(e){}}
 }
+// On narrow screens the sheet frame grows to fit the sheet so the page scrolls as one.
+// Measure the sheet itself (not the frame's viewport, which never shrinks), and skip it while the frame is hidden.
+function fitFrame(){const fr=$("frame");if(window.innerWidth>=960||!fr.offsetParent||!fr.clientWidth)return;
+  try{const d=fr.contentDocument,b=d&&d.body;if(!b)return;const hgt=Math.ceil(b.getBoundingClientRect().height)+4;if(hgt>40)fr.style.height=hgt+"px";}catch(e){}}
 window.addEventListener("resize",()=>{if(window.innerWidth>=960)$("frame").style.height="";else schedulePreview();});
 let dl=null;
 async function offerFile(filename,data,st){
@@ -3928,7 +3932,7 @@ $("r_import").addEventListener("change",async e=>{
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
 const MB={on:false,tab:"build",step:0,mq:window.matchMedia("(max-width: 959px)")};
-try{const t=localStorage.getItem("ledger_mtab");if(["build","sheet","play"].includes(t))MB.tab=t;}catch(e){}
+try{const t=localStorage.getItem("ledger_mtab");if(["build","sheet"].includes(t))MB.tab=t;}catch(e){}
 const M_SHORT={1:"Class",2:"Species",3:"Background",4:"Scores",5:"Skills",6:"Spells",7:"Gear",8:"Details"};
 function mSteps(){return [...document.querySelectorAll("#f > fieldset")].filter(f=>!f.hidden);}
 function mNum(fs){const n=fs.querySelector("legend .n");return n?+n.textContent:0;}
@@ -3948,12 +3952,12 @@ function mRefresh(){if(!MB.on)return;const st=mSteps();if(MB.step>=st.length)MB.
   $("m_pos").textContent=`Step ${MB.step+1} of ${st.length}`;$("m_prev").disabled=MB.step===0;
   $("m_next").textContent=MB.step===st.length-1?"See the sheet ›":"Next ›";}
 function mGo(i,scroll){MB.step=Math.max(0,i);mRefresh();if(scroll!==false){const top=$("msteps").getBoundingClientRect().top+window.scrollY;if(window.scrollY>top)window.scrollTo({top});}}
-function mTab(t,fromDM){if(!MB.on)return;if(t==="dm"&&isPlayerView())t="build";
+function mTab(t,fromDM){if(!MB.on)return;if(t==="play")t="sheet";if(t==="dm"&&isPlayerView())t="build";
   if(t!=="dm"&&!fromDM&&document.body.classList.contains("dmmode"))closeDM();
   MB.tab=t;["build","sheet","play","dm"].forEach(k=>document.body.classList.toggle("t-"+k,k===t||(k==="sheet"&&t==="play")));
   document.body.classList.toggle("t-build",t==="build");
   if(t==="dm"){if(!document.body.classList.contains("dmmode"))openDM();}
-  if((t==="play")!==document.body.classList.contains("playing"))setPlay(t==="play");
+  if(document.body.classList.contains("playing"))setPlay(false);
   document.querySelectorAll("#mtabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
   if(t!=="dm")try{localStorage.setItem("ledger_mtab",t);}catch(e){}
   document.body.classList.remove("mmenu");$("m_menu").setAttribute("aria-expanded","false");
