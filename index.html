@@ -312,7 +312,7 @@ body.compact.t-build #mnav{display:flex;align-items:center;gap:.6rem;justify-con
 #mnav span{font-size:.8rem;color:var(--ink-soft)}
 #mnav button{min-width:6.5rem}
 body.compact #mtabs{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);padding:0 0 env(safe-area-inset-bottom,0px);box-shadow:0 -4px 16px rgba(0,0,0,.08)}
-#mtabs button{flex:1;background:transparent;color:var(--ink-soft);border:0;border-radius:0;padding:.45rem .2rem .5rem;font-size:.72rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+#mtabs button{flex:1;background:transparent;color:var(--ink-soft);border:0;border-radius:0;padding:.85rem .2rem .9rem;font-size:.9rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:.1rem}
 #mtabs button .i{font-size:1.15rem;line-height:1.2}
 #mtabs button[aria-selected="true"]{color:var(--legend);box-shadow:inset 0 3px 0 var(--legend)}
 body.compact #dmv{padding-top:.4rem}
@@ -326,12 +326,12 @@ body.compact #dm_close{display:none}
     <h1>Character Ledger</h1>
     <p>Choose a class, species and background and the rules fill themselves in. The sheet on the right updates as you go, ready to print or share<span class="dmonly">, as a player sheet or an NPC stat block</span>.</p>
   </div>
-  <div class="themepick"><button type="button" class="ghost sm" id="th_btn" aria-expanded="false" aria-controls="th_panel">🎨 Theme</button>
+  <div class="themepick"><button type="button" class="ghost sm" id="th_btn" aria-expanded="false" aria-controls="th_panel">Theme</button>
     <div id="th_panel" hidden role="dialog" aria-label="Theme"><h3>Colours</h3><div class="thgrid" id="th_grid"></div><h3>Light or dark</h3><div class="thmode" id="th_mode"><button type="button" data-m="auto">Match device</button><button type="button" data-m="light">Light</button><button type="button" data-m="dark">Dark</button></div></div></div>
 </div></header>
 <section class="rbar" aria-label="Your characters">
   <div class="inner">
-    <button type="button" class="ghost sm" id="m_menu" aria-expanded="false" aria-controls="rb_actions">☰ Menu</button>
+    <button type="button" class="ghost sm" id="m_menu" aria-expanded="false" aria-controls="rb_actions">Menu</button>
     <div class="rb-cur"><span class="k">Now editing</span><strong id="cur_name">New character</strong><span class="m" id="cur_meta"></span></div>
     <div class="rb-actions" id="rb_actions">
       <label class="sr dmonly" for="r_kind">Character type</label>
@@ -535,7 +535,7 @@ body.compact #dm_close{display:none}
       <label><input type="radio" name="mode" value="npc"><span>NPC</span></label>
     </div>
     <button type="button" class="ghost sm" id="play_btn" aria-pressed="false">Play mode</button>
-    <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto" title="Shows the explanations: what each number means, the On your turn panel, and how levelling up works"><input type="checkbox" id="tips"> Learning mode</label>
+    <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto" title="Guidance: shows the explanations on the sheet (what each number means, the On your turn panel, how levelling up works)"><input type="checkbox" id="tips"> Guidance</label>
     <span class="dlgrp"><button type="button" class="alt" id="dl_btn" data-share="1">Share</button></span>
   </div>
   <iframe id="frame" title="Character sheet preview"></iframe>
@@ -543,14 +543,14 @@ body.compact #dm_close{display:none}
 </aside>
 </div></div>
 <dialog id="qb" aria-labelledby="qb_head"><div class="lvhead"><b id="qb_head">Quick build</b><button type="button" class="ghost sm" id="qb_x" aria-label="Close">×</button></div>
-<div id="qb_body"><p class="hint" style="margin-top:0">Pick the four big choices (or roll the dice) and the builder fills in the rest: ability scores, skills, subclass, class options, invocations, spells and gear. You can change anything afterwards.</p>
+<div id="qb_body"><p class="hint" style="margin-top:0">Pick the four big choices (or let Random pick) and the builder fills in the rest: ability scores, skills, subclass, class options, invocations, spells and gear. You can change anything afterwards.</p>
  <div class="qbgrid">
-  <div><label for="qb_cls">Class</label><div class="qbpick"><select id="qb_cls"></select><button type="button" class="ghost sm" data-qbr="cls" aria-label="Random class" title="Random class">🎲</button></div></div>
-  <div><label for="qb_sp">Species</label><div class="qbpick"><select id="qb_sp"></select><button type="button" class="ghost sm" data-qbr="sp" aria-label="Random species" title="Random species">🎲</button></div></div>
-  <div><label for="qb_bg">Background</label><div class="qbpick"><select id="qb_bg"></select><button type="button" class="ghost sm" data-qbr="bg" aria-label="Random background" title="Random background">🎲</button></div></div>
-  <div><label for="qb_lv">Level</label><div class="qbpick"><select id="qb_lv"></select><button type="button" class="ghost sm" data-qbr="lv" aria-label="Random level" title="Random level">🎲</button></div></div>
+  <div><label for="qb_cls">Class</label><div class="qbpick"><select id="qb_cls"></select><button type="button" class="ghost sm" data-qbr="cls" aria-label="Random class" title="Random class">Random</button></div></div>
+  <div><label for="qb_sp">Species</label><div class="qbpick"><select id="qb_sp"></select><button type="button" class="ghost sm" data-qbr="sp" aria-label="Random species" title="Random species">Random</button></div></div>
+  <div><label for="qb_bg">Background</label><div class="qbpick"><select id="qb_bg"></select><button type="button" class="ghost sm" data-qbr="bg" aria-label="Random background" title="Random background">Random</button></div></div>
+  <div><label for="qb_lv">Level</label><div class="qbpick"><select id="qb_lv"></select><button type="button" class="ghost sm" data-qbr="lv" aria-label="Random level" title="Random level">Random</button></div></div>
  </div>
- <button type="button" class="ghost sm" id="qb_rall" style="margin-top:.5rem">🎲 Randomize all four</button>
+ <button type="button" class="ghost sm" id="qb_rall" style="margin-top:.5rem">Randomize all four</button>
  <details class="qbabout" open><summary><b>About the character</b> <span class="small">(optional; fill in whatever you know)</span></summary>
   <div class="seg dmonly" role="radiogroup" aria-label="Character type" style="margin:.5rem 0"><label><input type="radio" name="qb_kind" value="pc" checked><span>Player character</span></label><label><input type="radio" name="qb_kind" value="npc"><span>NPC</span></label></div>
   <div class="qbgrid">
@@ -568,10 +568,10 @@ body.compact #dm_close{display:none}
  </details>
 </div>
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
-<div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>🎲 Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
+<div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
 <dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
-<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build"><span class="i" aria-hidden="true">✎</span>Build</button><button type="button" role="tab" data-tab="sheet"><span class="i" aria-hidden="true">▤</span>Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly"><span class="i" aria-hidden="true">♜</span>DM</button></nav>
+<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">DM</button></nav>
 <div class="viewsw" id="viewsw"><span>Showing: <span class="vtag" id="view_tag">Player view</span></span><button type="button" class="ghost sm" id="view_btn" aria-pressed="false">Show DM tools</button><span class="small" id="view_note"></span></div>
 <footer style="max-width:1240px;margin:0 auto;padding:0 16px 2rem;font-size:.74rem;color:var(--ink-soft)">Rules text and spells are from the System Reference Document 5.2 by Wizards of the Coast LLC (dndbeyond.com/srd), licensed CC BY 4.0. Spell data compiled by the 5e-bits/5e-database project (MIT licence).</footer>
 
