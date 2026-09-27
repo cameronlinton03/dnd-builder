@@ -188,6 +188,7 @@ body.dmmode .grid{display:none}
 .ntadd{background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);padding:.6rem .7rem;margin-bottom:.9rem}.ntaddh{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem}
 .ntpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.3rem;margin:.5rem 0}.ntpick button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:.35rem .5rem;color:var(--ink)}
 button.danger-t{color:var(--warn)}
+button.armed,button.armed:hover{background:var(--warn)!important;border-color:var(--warn)!important;color:#fff!important}
 dialog#sbview{max-width:760px;width:96vw;height:88vh;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:0;overflow:hidden}dialog#sbview[open]{display:flex;flex-direction:column}dialog#sbview::backdrop{background:rgba(20,16,10,.45)}#sb_frame{flex:1;border:0;width:100%;background:#fff}
 @media(max-width:620px){.nted,.ntform{grid-template-columns:1fr}.dmtabs{margin-left:0}}
 .dmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.9rem}
@@ -3709,6 +3710,10 @@ function dmTraitsHTML(m){if(!m.traits.length)return "";const e=esc,k0=m.id+"|tra
 let FIGHT={on:false,round:1,cur:null,list:[]};
 try{const f=JSON.parse(localStorage.getItem("ledger_fight")||"null");if(f&&Array.isArray(f.list))FIGHT=f;}catch(e){}
 DMV.mf=DMV.mf||{name:"",count:"1",hp:"",ac:"",init:""};
+const ARM={k:"",t:0};
+function armed(btn,key,label){if(ARM.k===key&&Date.now()-ARM.t<6000){ARM.k="";return true;}
+  ARM.k=key;ARM.t=Date.now();if(btn){btn.dataset.orig=btn.dataset.orig||btn.textContent;btn.textContent=label||"Tap again to confirm";btn.classList.add("armed");}
+  setTimeout(()=>{if(ARM.k===key)ARM.k="";if(btn&&btn.isConnected&&btn.dataset.orig){btn.textContent=btn.dataset.orig;btn.classList.remove("armed");}},6000);return false;}
 function fightSave(){try{localStorage.setItem("ledger_fight",JSON.stringify(FIGHT));}catch(e){}}
 let fightN=0;const fid=()=>"f"+Date.now().toString(36)+(fightN++);
 function fightRows(ms){const byId=Object.fromEntries(ms.map(m=>[m.id,m]));
@@ -3757,7 +3762,7 @@ function fightHTML(ms){const e=esc;
 function fightClick(b,ms){const d=b.dataset,id=d.f,x=FIGHT.list.find(r=>r.id===id);
   const amtEl=id?$("dmv").querySelector(`[data-famt="${CSS.escape(id)}"]`):null,amt=Math.max(0,parseInt(amtEl&&amtEl.value)||0);
   if(d.fx==="start"){FIGHT={on:true,round:1,cur:null,list:[]};fightAddParty(ms.filter(m=>m.kind!=="npc"||DMV.npcs));}
-  else if(d.fx==="end"){if(!confirm("End this fight? The monsters are cleared."))return;FIGHT={on:false,round:1,cur:null,list:[]};}
+  else if(d.fx==="end"){if(!armed(b,"endfight","Tap again to end the fight"))return;FIGHT={on:false,round:1,cur:null,list:[]};}
   else if(d.fx==="next")fightStep(ms,1);else if(d.fx==="prev")fightStep(ms,-1);
   else if(d.fx==="addparty")fightAddParty(ms);
   else if(d.fx==="addmon"){const mf=DMV.mf,n=Math.max(1,Math.min(20,parseInt(mf.count)||1)),nm=(mf.name||"").trim()||"Monster",srd=typeof MON_BY!=="undefined"?MON_BY[nm]||MONSTERS.find(m=>m.n.toLowerCase()===nm.toLowerCase()):null;
@@ -3905,7 +3910,7 @@ function ntClick(b,camp){const d=b.dataset,k=d.nt;
   if(k==="edit"){DMV.edit=d.id;renderDM();return;}
   if(k==="cancel"){DMV.edit="";renderDM();return;}
   if(k==="save"){const box=b.closest(".nted"),vals={};box.querySelectorAll("[data-ntf]").forEach(el=>vals[el.dataset.ntf]=el.value);vals.tags=[...box.querySelectorAll("[data-ntg].on")].map(x=>x.dataset.ntg);DMV.edit="";ntSaveMeta(d.id,vals).then(renderDM);return;}
-  if(k==="del"){const c=(RS.cres||[]).find(x=>x.id===d.id);if(!c||!confirm(`Delete ${c.name}?`))return;DMV.edit="";RS.creCol.doc(d.id).delete().catch(writeErr);return;}
+  if(k==="del"){const c=(RS.cres||[]).find(x=>x.id===d.id);if(!c||!armed(b,"del:"+d.id,"Tap again to delete"))return;DMV.edit="";RS.creCol.doc(d.id).delete().catch(writeErr);return;}
   if(k==="open"){closeDM();openChar(d.id);return;}
   const [src,id]=[d.id.slice(0,3),d.id.slice(4)];
   if(k==="sb"){if(src==="cre"){const c=(RS.cres||[]).find(x=>x.id===id);if(c)showStatBlock(creatureDoc(creBlock(c)),c.name);}
@@ -3987,7 +3992,7 @@ $("dmv").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   else if(d.dm==="cond")dmUpdate(id,t=>{t.cond=(t.cond||[]).filter(c=>c!==d.c);});
   else if(d.dm==="endconc")dmUpdate(id,t=>{t.conc="";t.log="";});
   else if(d.dm==="exh")dmUpdate(id,t=>{t.exh=Math.max(0,Math.min(6,(t.exh||0)+(+d.d)));});
-  else if(d.dm==="partysr"||d.dm==="partylr"){if(!confirm(`${d.dm==="partylr"?"Long":"Short"} rest for everyone shown?`))return;party().forEach(pid=>dmUpdate(pid,(t,s)=>d.dm==="partylr"?playLongRest(s,t):playShortRest(s,t)));}});
+  else if(d.dm==="partysr"||d.dm==="partylr"){if(!armed(b,d.dm,`Tap again: ${d.dm==="partylr"?"long":"short"} rest for all`))return;party().forEach(pid=>dmUpdate(pid,(t,s)=>d.dm==="partylr"?playLongRest(s,t):playShortRest(s,t)));}});
 $("dmv").addEventListener("change",e=>{const t=e.target;
   if(fightChange(t,dmModels()))return;
   if(t.dataset&&t.dataset.caf!==undefined&&DMV.add&&DMV.add.f){DMV.add.f[t.dataset.caf]=t.value;return;}
@@ -4529,7 +4534,7 @@ $("idea_btn").addEventListener("click",ideaOpen);$("qb_idea").addEventListener("
 $("idea_x").addEventListener("click",ideaClose);$("idea").addEventListener("click",e=>{if(e.target===$("idea"))ideaClose();const b=e.target.closest("[data-idswap]");if(!b)return;const k=b.dataset.idswap;ideaRoll(k);if(k==="sp")ideaRoll("name");ideaRender();});
 $("idea_again").addEventListener("click",ideaNew);
 $("idea_use").addEventListener("click",()=>{const d=ideaDetails(),had=Object.keys(d).some(k=>(S[k]||"").trim());
-  if(had&&!confirm("Replace the name and details already in step 8 with this idea?"))return;
+  if(had&&!armed($("idea_use"),"ideause","Tap again to replace step 8"))return;
   Object.assign(S,d);syncStatic();renderAll();save();ideaClose();if(typeof MB!=="undefined"&&MB.on){mTab("build");mGo(mSteps().length-1);}
   rsStatus(`Added ${esc(d.name)}'s details to step 8. Change anything you like.`);});
 $("idea_build").addEventListener("click",()=>{const d=ideaDetails(),keep={...IDEA};ideaClose();const q=$("qb");if(!q.open)openQuickBuild();
