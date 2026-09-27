@@ -189,6 +189,10 @@ body.dmmode .grid{display:none}
 .ntpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.3rem;margin:.5rem 0}.ntpick button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:.35rem .5rem;color:var(--ink)}
 button.danger-t{color:var(--warn)}
 button.armed,button.armed:hover{background:var(--warn)!important;border-color:var(--warn)!important;color:#fff!important}
+.sbexp{display:inline-flex;gap:.3rem;flex-wrap:wrap;align-items:center}#sbview .lvhead{gap:.5rem;flex-wrap:wrap}
+dialog#expbox{max-width:760px;width:96vw;max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}dialog#expbox::backdrop{background:rgba(20,16,10,.45)}
+#exp_body{padding:.6rem 1rem}#exp_text{width:100%;min-height:52vh;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre}
+#exp_rich{background:#fff;color:#1d211c;border:1px solid var(--line);border-radius:var(--radius);padding:.6rem;max-height:56vh;overflow:auto}
 dialog#sbview{max-width:760px;width:96vw;height:88vh;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:0;overflow:hidden}dialog#sbview[open]{display:flex;flex-direction:column}dialog#sbview::backdrop{background:rgba(20,16,10,.45)}#sb_frame{flex:1;border:0;width:100%;background:#fff}
 @media(max-width:620px){.nted,.ntform{grid-template-columns:1fr}.dmtabs{margin-left:0}}
 #wipe{max-width:1240px;margin:1.2rem auto 0;padding:0 16px .4rem}
@@ -569,7 +573,7 @@ body.compact #dm_close{display:none}
       <label><input type="radio" name="mode" value="pc" checked><span>Player character</span></label>
       <label><input type="radio" name="mode" value="npc"><span>NPC</span></label>
     </div>
-    <button type="button" class="ghost sm" id="play_btn" aria-pressed="false">Play mode</button>
+    <button type="button" class="ghost sm" id="play_btn" aria-pressed="false">Play mode</button><span id="npcexp" class="dmonly sbexp" hidden><button type="button" class="ghost sm" data-exp="md" data-src="cur">Copy for Obsidian</button><button type="button" class="ghost sm" data-exp="word" data-src="cur">Copy for Word</button></span>
     <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto" title="Guidance: shows the explanations on the sheet (what each number means, the On your turn panel, how levelling up works)"><input type="checkbox" id="tips"> Guidance</label>
     <span class="dlgrp"><button type="button" class="alt" id="dl_btn" data-share="1">Share</button></span>
   </div>
@@ -608,7 +612,8 @@ body.compact #dm_close{display:none}
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
 <dialog id="idea" aria-labelledby="idea_title"><div class="lvhead"><b id="idea_title">Character idea</b><button type="button" class="ghost sm" id="idea_x" aria-label="Close">×</button></div><div id="idea_body"></div>
 <div class="lvfoot"><button type="button" class="ghost sm" id="idea_again">Another one</button><button type="button" class="ghost sm" id="idea_use" title="Fill in the name and details in step 8">Use the details</button><button type="button" class="sm" id="idea_build" title="Open Quick build with this species, class, background and details">Build it</button></div></dialog>
-<dialog id="sbview" aria-labelledby="sb_title"><div class="lvhead"><b id="sb_title">Stat block</b><button type="button" class="ghost sm" id="sb_x" aria-label="Close">×</button></div><iframe id="sb_frame" title="Stat block"></iframe></dialog>
+<dialog id="expbox" aria-labelledby="exp_title"><div class="lvhead"><b id="exp_title">Copy</b><button type="button" class="ghost sm" id="exp_x" aria-label="Close">×</button></div><div id="exp_body"></div><div class="lvfoot"><span id="exp_status" class="hint" aria-live="polite"></span><button type="button" class="ghost sm" id="exp_sel">Select all</button><button type="button" class="sm" id="exp_copy">Copy</button></div></dialog>
+<dialog id="sbview" aria-labelledby="sb_title"><div class="lvhead"><b id="sb_title">Stat block</b><span class="sbexp"><button type="button" class="ghost sm" data-exp="md">Copy for Obsidian</button><button type="button" class="ghost sm" data-exp="word">Copy for Word</button><button type="button" class="ghost sm" id="sb_x" aria-label="Close">×</button></span></div><iframe id="sb_frame" title="Stat block"></iframe></dialog>
 <dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
 <nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">Campaign</button></nav>
@@ -1946,7 +1951,7 @@ function restoreFocus(id,val,t,sc){sc=sc||"";
 $("mc_wrap").addEventListener("click",e=>{const b=e.target.closest("button[data-mcrm]");if(!b)return;mcRemove(+b.dataset.mcrm);renderAll();const el=$("mc_add");if(el)el.focus();});
 $("weapons").addEventListener("click",e=>{const b=e.target.closest("button[data-rmw]");if(!b)return;S.weapons.splice(+b.dataset.rmw,1);renderAll();$("add_weapon").focus();});
 document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener("change",e=>{S.mode=e.target.value;syncTips();schedulePreview(true);save();}));
-function syncTips(){$("tips").checked=S.tips!==false;$("tips_wrap").hidden=sheetMode()==="npc";}
+function syncTips(){$("tips").checked=S.tips!==false;$("tips_wrap").hidden=sheetMode()==="npc";const x=$("npcexp");if(x)x.hidden=sheetMode()!=="npc";}
 const isPlayerView=()=>document.body.classList.contains("pview");
 function sheetMode(){return isPlayerView()?"pc":S.mode;}
 $("tips").addEventListener("change",e=>{S.tips=e.target.checked;schedulePreview(true);save();});
@@ -3775,7 +3780,7 @@ function fightClick(b,ms){const d=b.dataset,id=d.f,x=FIGHT.list.find(r=>r.id===i
     for(let i=1;i<=n;i++)FIGHT.list.push({id:fid(),k:"mon",name:n>1?`${nm} ${i}`:nm,init:isFinite(ini)?ini:null,hp,max:hp,ac:isFinite(ac)?ac:null,cond:[],ib,sb:srd?srd.n:""});
     DMV.mf={name:"",count:"1",hp:"",ac:"",init:""};}
   else if(!x)return;
-  else if(d.fx==="sb"){if(x.cre){const c=(RS.cres||[]).find(y=>y.id===x.cre);if(c)showStatBlock(creatureDoc(creBlock(c)),c.name);}else if(x.npc){const ch=RS.chars.find(y=>y.id===x.npc);if(ch)showStatBlock(withState(x.npc===RS.curId?S:ch.state,()=>sheetHTML("npc",true)),ch.name);}else if(x.sb&&MON_BY[x.sb])showStatBlock(creatureDoc({...MON_BY[x.sb],base:x.sb}),x.sb);return;}
+  else if(d.fx==="sb"){if(x.cre){const c=(RS.cres||[]).find(y=>y.id===x.cre);if(c)showStatBlock(creatureDoc(creBlock(c)),c.name,{block:creBlock(c)});}else if(x.npc){const ch=RS.chars.find(y=>y.id===x.npc);if(ch){const st=x.npc===RS.curId?S:ch.state;showStatBlock(withState(st,()=>sheetHTML("npc",true)),ch.name,{state:st});}}else if(x.sb&&MON_BY[x.sb])showStatBlock(creatureDoc({...MON_BY[x.sb],base:x.sb}),x.sb,{block:MON_BY[x.sb]});return;}
   else if(d.fx==="del"){if(FIGHT.cur===id)fightStep(ms,1);FIGHT.list=FIGHT.list.filter(r=>r.id!==id);if(FIGHT.cur===id)FIGHT.cur=null;}
   else if(x.k==="pc"){if(d.fx==="dmg"&&amt)dmUpdate(x.ref,(t,s)=>dmDamage(t,s,amt));else if(d.fx==="heal"&&amt)dmUpdate(x.ref,(t,s)=>{const c0=curHP(s);t.hp=Math.min(s.hp,c0+amt);if(c0===0)t.ds=[0,0];t.log=`Healed ${Math.min(amt,s.hp-c0)} HP.`;});
     else if(d.fx==="uncond")dmUpdate(x.ref,t=>{t.cond=(t.cond||[]).filter(c=>c!==d.c);});}
@@ -3897,7 +3902,8 @@ function creatureDoc(b){const e=esc,md=v=>Math.floor((v-10)/2),ab=b.ab||[10,10,1
   ${sec("Traits",b.tr)}${sec("Actions",b.act)}${sec("Bonus Actions",b.ba)}${sec("Reactions",b.re)}${sec("Legendary Actions",b.la)}
   ${MON_BY[b.base||""]||b.xp!=null?'<p class="who">From the System Reference Document 5.2 (CC BY 4.0).</p>':""}</div></div>`;
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${SHEET_CSS}${NPC_CSS}</style></head><body><div class="page">${body}</div></body></html>`;}
-function showStatBlock(html,title){$("sb_title").textContent=title||"Stat block";const d=$("sbview");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");$("sb_frame").srcdoc=html;}
+let SBSRC=null;
+function showStatBlock(html,title,src){SBSRC=src||null;$("sbview").querySelectorAll("[data-exp]").forEach(b=>b.hidden=!SBSRC);$("sb_title").textContent=title||"Stat block";const d=$("sbview");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");$("sb_frame").srcdoc=html;}
 function ntClick(b,camp){const d=b.dataset,k=d.nt;
   if(k==="tagclear"){DMV.tagf=[];renderDM();return;}
   if(k==="tagmanage"){DMV.tagEdit=campTags(camp).map(t=>({...t}));renderDM();return;}
@@ -3918,8 +3924,8 @@ function ntClick(b,camp){const d=b.dataset,k=d.nt;
   if(k==="del"){const c=(RS.cres||[]).find(x=>x.id===d.id);if(!c||!armed(b,"del:"+d.id,"Tap again to delete"))return;DMV.edit="";RS.creCol.doc(d.id).delete().catch(writeErr);return;}
   if(k==="open"){closeDM();openChar(d.id);return;}
   const [src,id]=[d.id.slice(0,3),d.id.slice(4)];
-  if(k==="sb"){if(src==="cre"){const c=(RS.cres||[]).find(x=>x.id===id);if(c)showStatBlock(creatureDoc(creBlock(c)),c.name);}
-    else{const ch=RS.chars.find(x=>x.id===id);if(ch)showStatBlock(withState(id===RS.curId?S:ch.state,()=>sheetHTML("npc",true)),ch.name);}return;}
+  if(k==="sb"){if(src==="cre"){const c=(RS.cres||[]).find(x=>x.id===id);if(c)showStatBlock(creatureDoc(creBlock(c)),c.name,{block:creBlock(c)});}
+    else{const ch=RS.chars.find(x=>x.id===id);if(ch){const st=id===RS.curId?S:ch.state;showStatBlock(withState(st,()=>sheetHTML("npc",true)),ch.name,{state:st});}}return;}
   if(k==="fight"){let ent=null;
     if(src==="cre"){const c=(RS.cres||[]).find(x=>x.id===id);if(c){const bl=creBlock(c);ent={id:fid(),k:"mon",name:c.name,init:null,hp:bl.hp,max:bl.hp,ac:bl.ac,cond:[],ib:Math.floor(((bl.ab||[10,10])[1]-10)/2),cre:id};}}
     else{const ch=RS.chars.find(x=>x.id===id);if(ch){const m=withState(id===RS.curId?S:ch.state,()=>{const s=snapshot();return {hp:s.hp,ac:s.ac,init:s.init};});ent={id:fid(),k:"mon",name:ch.name,init:null,hp:m.hp,max:m.hp,ac:m.ac,cond:[],ib:m.init,npc:id};}}
@@ -4022,7 +4028,12 @@ $("lvlup").addEventListener("click",e=>{const b=e.target.closest("button");if(!b
   if(b.id==="lv_undo"){const e=lvEntry(),key=e.primary?e.level:`${e.cls}:${e.level}`;if(S.hpRolls)delete S.hpRolls[key];if(LV.from)lvRestore(LV.from);else S.level=Math.max(1,S.level-1);$("level").value=String(S.level);renderAll();closeLevelUp();return;}
   if(b.dataset.jump){closeLevelUp();const el=$(b.dataset.jump);if(el){mReveal(el);el.scrollIntoView({behavior:"smooth",block:"start"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");}}});
 $("lvlup").addEventListener("close",()=>schedulePreview(true));
-$("roll_x").addEventListener("click",closeRoll);$("sb_x").addEventListener("click",()=>{const d=$("sbview");if(d.close)d.close();else d.removeAttribute("open");});$("sbview").addEventListener("click",e=>{if(e.target===$("sbview"))$("sbview").close();});$("rollbox").addEventListener("click",e=>{if(e.target===$("rollbox"))closeRoll();});
+$("roll_x").addEventListener("click",closeRoll);document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-exp]");if(!b)return;e.preventDefault();
+  let d=null;try{if(b.dataset.src==="cur")d=sbFromNPC(S);else if(SBSRC)d=SBSRC.state?sbFromNPC(SBSRC.state):sbFromBlock(SBSRC.block);}catch(err){d=null;}
+  if(!d)return;openExport(b.dataset.exp,d);});
+$("exp_x").addEventListener("click",()=>$("expbox").close());$("expbox").addEventListener("click",e=>{if(e.target===$("expbox"))$("expbox").close();});
+$("exp_sel").addEventListener("click",()=>{expSelect();$("exp_status").textContent="Selected. Press Ctrl+C (Cmd+C) to copy.";});$("exp_copy").addEventListener("click",expCopy);
+$("sb_x").addEventListener("click",()=>{const d=$("sbview");if(d.close)d.close();else d.removeAttribute("open");});$("sbview").addEventListener("click",e=>{if(e.target===$("sbview"))$("sbview").close();});$("rollbox").addEventListener("click",e=>{if(e.target===$("rollbox"))closeRoll();});
 function setPlay(on){document.body.classList.toggle("playing",on);$("play_btn").setAttribute("aria-pressed",String(on));$("play_btn").textContent=on?"Back to builder":"Play mode";if(on&&S.mode!=="pc"){S.mode="pc";document.querySelector('input[name=mode][value="pc"]').checked=true;syncTips();}schedulePreview(true);}
 $("play_btn").addEventListener("click",()=>{setPlay(!document.body.classList.contains("playing"));window.scrollTo({top:0});});
 
@@ -4575,6 +4586,61 @@ $("wipe").addEventListener("click",e=>{const b=e.target.closest("[data-wipe]");i
   if(k==="next"){WIPE.step=2;renderWipe();return;}
   if(k==="next2"){if(!$("wipe_ok").checked){msg().textContent="Tick the box to continue.";return;}WIPE.step=3;renderWipe();setTimeout(()=>$("wipe_word").focus(),0);return;}
   if(k==="go"){if($("wipe_word").value.trim()!=="DELETE"){msg().textContent="Type DELETE (in capitals) to confirm.";return;}wipeAll();}});
+
+/* ---------- stat block export: Fantasy Statblocks (Obsidian) and a table that pastes into Word / Google Docs ---------- */
+const AB_FULL=["strength","dexterity","constitution","intelligence","wisdom","charisma"];
+// one common shape for NPCs and creatures
+function sbFromNPC(st){return withState(st,()=>{const s=snapshot(),doc=new DOMParser().parseFromString(npcHTML(),"text/html"),sb=doc.querySelector(".sb");
+  const lineOf=lab=>{const p=[...sb.querySelectorAll(":scope > p")].find(p=>{const b=p.querySelector("b");return b&&b.textContent.trim()===lab;});if(!p)return "";const c=p.cloneNode(true);c.querySelector("b").remove();return c.textContent.replace(/\s+/g," ").trim();};
+  const ct=(sb.querySelector(".ct")||{}).textContent||"",m=/^(\S+)\s+([^(,]+?)(?:\s*\(([^)]*)\))?(?:,\s*(.*))?$/.exec(ct.trim())||[];
+  const acp=[...sb.querySelectorAll(":scope > p")].find(p=>/^AC\b/.test(p.textContent.trim()))||{textContent:""};
+  const hpm=/HP\s+(\d+)\s*\(([^)]*)\)/.exec(sb.textContent)||[];
+  const secs={};let cur=null;[...sb.children].forEach(el=>{if(el.tagName==="H3"){cur=el.textContent.trim();secs[cur]=[];return;}if(cur&&el.tagName==="P"){const n=el.querySelector("b i, i b");const name=n?n.textContent.replace(/\.$/,"").trim():"";let d=el.textContent.trim();if(name&&d.startsWith(n.textContent))d=d.slice(n.textContent.length).trim();secs[cur].push([name,d]);}});
+  const est=estimateCR();
+  return {name:S.name||"Unnamed",size:m[1]||"Medium",type:(m[2]||"Humanoid").trim(),subtype:m[3]||"",alignment:m[4]||S.align||"",ac:s.ac,acNote:s.acNote||"",init:s.init,hp:s.hp,hitDice:hpm[2]||"",
+    speed:lineOf("Speed"),stats:AB.map(a=>s.scores[a]),saves:s.saves.filter(x=>x.prof).map(x=>[AB_FULL[AB.indexOf(x.a)],x.bonus]),skills:s.skills.filter(x=>x.prof).map(x=>[x.name,x.bonus]),
+    vul:"",res:lineOf("Resistances"),imm:"",ci:lineOf("Condition Immunities"),gear:lineOf("Gear"),senses:lineOf("Senses"),languages:lineOf("Languages"),cr:S.cr||est.cr,
+    traits:secs["Traits"]||[],actions:secs["Actions"]||[],bonus:secs["Bonus Actions"]||[],reactions:secs["Reactions"]||[],legendary:[],role:S.title||""};});}
+function sbFromBlock(b){const md=v=>Math.floor((v-10)/2),ab=b.ab||[10,10,10,10,10,10];
+  const pairs=str=>(str||"").split(/,\s*/).map(x=>{const m=/^(.*?)\s*([+−-]\d+)$/.exec(x.trim());return m?[m[1],+m[2].replace("−","-")]:null;}).filter(Boolean);
+  const fullAb=a=>AB_FULL.find(f=>f.startsWith(a.toLowerCase().slice(0,3)))||a.toLowerCase();
+  return {name:b.n,size:b.sz||"",type:(b.t||"").replace(/^./,c=>c.toUpperCase()),subtype:"",alignment:b.al||"",ac:b.ac,acNote:b.acn||"",init:md(ab[1]),hp:b.hp,hitDice:b.hd||"",speed:b.sp||"",stats:ab,
+    saves:pairs(b.sv).map(([a,v])=>[fullAb(a),v]),skills:pairs(b.sk),vul:b.vul||"",res:b.res||"",imm:b.imm||"",ci:b.ci||"",gear:b.gear||"",senses:b.sen||"",languages:b.lang||"",cr:b.cr||"",
+    traits:b.tr||[],actions:b.act||[],bonus:b.ba||[],reactions:b.re||[],legendary:b.la||[],role:""};}
+const yq=v=>JSON.stringify(String(v??""));
+function toFantasyStatblock(d){const L=["```statblock","layout: Basic 5e Layout",`name: ${yq(d.name)}`];
+  if(d.size)L.push(`size: ${yq(d.size)}`);if(d.type)L.push(`type: ${yq(d.type)}`);if(d.subtype)L.push(`subtype: ${yq(d.subtype)}`);if(d.alignment)L.push(`alignment: ${yq(d.alignment)}`);
+  L.push(`ac: ${d.ac}`);if(d.acNote)L.push(`ac_class: ${yq(d.acNote)}`);L.push(`hp: ${d.hp}`);if(d.hitDice)L.push(`hit_dice: ${yq(d.hitDice)}`);if(d.speed)L.push(`speed: ${yq(d.speed)}`);
+  L.push(`modifier: ${d.init}`,`stats: [${d.stats.join(", ")}]`);
+  if(d.saves.length){L.push("saves:");d.saves.forEach(([a,v])=>L.push(`  - ${a}: ${v}`));}
+  if(d.skills.length){L.push("skillsaves:");d.skills.forEach(([a,v])=>L.push(`  - ${yq(a.toLowerCase())}: ${v}`));}
+  [["damage_vulnerabilities",d.vul],["damage_resistances",d.res],["damage_immunities",d.imm],["condition_immunities",d.ci],["senses",d.senses],["languages",d.languages]].forEach(([k,v])=>{if(v)L.push(`${k}: ${yq(v)}`);});
+  L.push(`cr: ${yq(d.cr)}`);
+  [["traits",d.traits],["actions",d.actions],["bonus_actions",d.bonus],["reactions",d.reactions],["legendary_actions",d.legendary]].forEach(([k,l])=>{if(!l||!l.length)return;L.push(`${k}:`);l.forEach(([n,t])=>{L.push(`  - name: ${yq(n||"")}`,`    desc: ${yq(t||"")}`);});});
+  if(d.gear||d.role)L.push(`# ${[d.role,d.gear?"Gear: "+d.gear:""].filter(Boolean).join(" · ")}`);
+  L.push("```");return L.join("\n");}
+function toWordHTML(d){const e=esc,red="#7a2e1d",bd=`border:1pt solid #c9b99a`,cell=`padding:3pt 6pt;${bd};vertical-align:top`,md=v=>Math.floor((v-10)/2);
+  const full=t=>`<tr><td colspan="6" style="${cell}">${t}</td></tr>`,lab=(k,v)=>v?full(`<b>${k}</b> ${e(v)}`):"";
+  const sec=(t,l)=>l&&l.length?`<tr><td colspan="6" style="${cell};background:#efe4cf;color:${red}"><b>${t}</b></td></tr>`+l.map(([n,x])=>full(`${n?`<b><i>${e(n)}.</i></b> `:""}${e(x)}`)).join(""):"";
+  const saveOf=i=>{const f=d.saves.find(s=>s[0]===AB_FULL[i]);return f?f[1]:null;};
+  return `<table style="border-collapse:collapse;width:100%;font-family:Calibri,Arial,sans-serif;font-size:10pt;border:1.5pt solid ${red}">
+<tr><td colspan="6" style="${cell};background:#f6efe1"><span style="font-size:15pt;font-weight:bold;color:${red}">${e(d.name)}</span><br><i>${e([d.size,d.type].filter(Boolean).join(" "))}${d.subtype?` (${e(d.subtype)})`:""}${d.alignment?`, ${e(d.alignment)}`:""}</i>${d.role?`<br>${e(d.role)}`:""}</td></tr>
+${full(`<b>AC</b> ${d.ac}${d.acNote?` (${e(d.acNote)})`:""} &nbsp; <b>Initiative</b> ${fmt(d.init)} (${10+d.init}) &nbsp; <b>HP</b> ${d.hp}${d.hitDice?` (${e(d.hitDice)})`:""}${d.speed?` &nbsp; <b>Speed</b> ${e(d.speed)}`:""}`)}
+<tr>${["STR","DEX","CON","INT","WIS","CHA"].map(a=>`<td style="${cell};text-align:center;background:#f6efe1;color:${red}"><b>${a}</b></td>`).join("")}</tr>
+<tr>${d.stats.map((v,i)=>{const sv=saveOf(i);return `<td style="${cell};text-align:center">${v} (${fmt(md(v))})${sv!=null?`<br><span style="font-size:8.5pt">save ${fmt(sv)}</span>`:""}</td>`;}).join("")}</tr>
+${lab("Skills",d.skills.map(([n,v])=>`${n} ${fmt(v)}`).join(", "))}${lab("Vulnerabilities",d.vul)}${lab("Resistances",d.res)}${lab("Immunities",[d.imm,d.ci].filter(Boolean).join("; "))}${lab("Gear",d.gear)}${lab("Senses",d.senses)}${lab("Languages",d.languages)}${lab("Challenge",d.cr?`CR ${d.cr}`:"")}
+${sec("Traits",d.traits)}${sec("Actions",d.actions)}${sec("Bonus Actions",d.bonus)}${sec("Reactions",d.reactions)}${sec("Legendary Actions",d.legendary)}
+</table><p></p>`;}
+let EXP=null;
+function openExport(kind,d){EXP={kind,d};const body=$("exp_body");$("exp_title").textContent=kind==="md"?`${d.name}: for Obsidian`:`${d.name}: for Word`;
+  if(kind==="md"){body.innerHTML=`<p class="hint" style="margin:0 0 .4rem">Click in the box, press Ctrl+A (Cmd+A on a Mac), copy, and paste into your note. Fantasy Statblocks draws it as a stat block.</p><textarea id="exp_text" spellcheck="false" readonly></textarea>`;$("exp_text").value=toFantasyStatblock(d);}
+  else{body.innerHTML=`<p class="hint" style="margin:0 0 .4rem">Click in the box, press Ctrl+A (Cmd+A on a Mac), copy, and paste into Word or Google Docs. It pastes as a table you can edit.</p><div id="exp_rich" contenteditable="true" spellcheck="false">${toWordHTML(d)}</div>`;}
+  const dlg=$("expbox");if(dlg.showModal&&!dlg.open)dlg.showModal();else dlg.setAttribute("open","");setTimeout(()=>{const t=$("exp_text")||$("exp_rich");t.focus();expSelect();},30);}
+function expSelect(){const t=$("exp_text");if(t){t.focus();t.select();return;}const r=$("exp_rich");if(!r)return;r.focus();const rg=document.createRange();rg.selectNodeContents(r);const sel=getSelection();sel.removeAllRanges();sel.addRange(rg);}
+async function expCopy(){const st=$("exp_status");try{if(EXP.kind==="md")await navigator.clipboard.writeText(toFantasyStatblock(EXP.d));
+    else{const html=toWordHTML(EXP.d),txt=$("exp_rich").innerText;await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([txt],{type:"text/plain"})})]);}
+    st.textContent="Copied. Paste it into your document.";}
+  catch(e){expSelect();try{if(document.execCommand&&document.execCommand("copy")){st.textContent="Copied. Paste it into your document.";return;}}catch(x){}st.textContent="Copying isn't allowed here, so it's selected for you: press Ctrl+C (Cmd+C).";}}
 
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
