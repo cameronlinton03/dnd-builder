@@ -125,6 +125,8 @@ button.alt{background:var(--teal);color:var(--on-teal);}
 .money{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.4rem}.money label{display:flex;align-items:center;gap:.25rem;font-size:.85rem}.money input{width:100%;min-width:0}
 dialog#rollbox{max-width:460px;width:94vw;max-height:86vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}
 .npcdeck{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .6rem;margin:.4rem 0 .2rem;padding:.55rem .7rem;border:1px dashed var(--line);border-radius:var(--radius)}.npcdeck .hint{flex-basis:100%;margin:0}
+.inspbox{display:flex;flex-direction:column;gap:.3rem;margin:.35rem 0 .2rem;padding:.5rem .6rem;border:1px dashed var(--line);border-radius:var(--radius);background:var(--panel)}.insph{font-size:.78rem;color:var(--ink-soft)}
+.inspbox .inspopt{text-align:left;font-weight:500;color:var(--ink);white-space:normal;line-height:1.35;padding:.45rem .6rem}.inspf{display:flex;gap:.3rem;justify-content:flex-end}.inspf .xs{margin-left:0}
 button.xs{font-size:.7rem;padding:.08rem .45rem;margin-left:.35rem;vertical-align:1px;font-weight:600}
 dialog#rollbox::backdrop{background:rgba(20,16,10,.45)}
 #roll_body{padding:.4rem 1rem 1rem;font-size:.92rem}#roll_body .rt{font-size:1.05rem;margin:.2rem 0 .3rem}
@@ -503,7 +505,7 @@ body.compact #dm_close{display:none}
 <fieldset>
   <legend><span class="n">8</span>Name and details</legend>
   <div class="row2">
-    <div><label for="name">Character name <button type="button" class="ghost xs dmonly npcd" data-npcdraw="name" data-scope="f" title="Draw from the NPC deck">Draw</button></label><input type="text" id="name" placeholder="e.g. Mirela Voss"></div>
+    <div><label for="name">Character name <button type="button" class="ghost xs dmonly npcd" data-npcdraw="name" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="name" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label><input type="text" id="name" placeholder="e.g. Mirela Voss"></div>
     <div><label for="player">Player <span class="small dmonly">(leave blank for NPCs)</span><span class="small plonly">(your name)</span></label><input type="text" id="player"></div>
   </div>
   <div class="row2">
@@ -516,15 +518,15 @@ body.compact #dm_close{display:none}
     <div class="dmonly"><label for="cr">Challenge rating <span class="small">(NPC sheets)</span></label><select id="cr"></select></div>
   </div>
   <p class="hint dmonly" id="cr_hint" aria-live="polite"></p>
-  <label for="appearance">Appearance <button type="button" class="ghost xs dmonly npcd" data-npcdraw="appearance" data-scope="f" title="Draw from the NPC deck">Draw</button></label>
+  <label for="appearance">Appearance <button type="button" class="ghost xs dmonly npcd" data-npcdraw="appearance" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="appearance" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label>
   <textarea id="appearance" rows="2" placeholder="Weathered face, a scar through one eyebrow, always in a salt-stained blue coat…"></textarea>
-  <label for="personality">Personality and mannerisms <button type="button" class="ghost xs dmonly npcd" data-npcdraw="personality" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs dmonly npcd" data-npcdraw="quirk" data-scope="f" title="Add an oddly specific quirk from the NPC deck">Quirk</button></label>
+  <label for="personality">Personality and mannerisms <button type="button" class="ghost xs dmonly npcd" data-npcdraw="personality" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="personality" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button> <button type="button" class="ghost xs dmonly npcd" data-npcdraw="quirk" data-scope="f" title="Add an oddly specific quirk from the NPC deck">Quirk</button></label>
   <textarea id="personality" rows="2" placeholder="Speaks softly, never sits with her back to a door…"></textarea>
-  <label for="goals">Goals and motivations <button type="button" class="ghost xs dmonly npcd" data-npcdraw="goals" data-scope="f" title="Draw from the NPC deck">Draw</button></label>
+  <label for="goals">Goals and motivations <button type="button" class="ghost xs dmonly npcd" data-npcdraw="goals" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="goals" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label>
   <textarea id="goals" rows="2" placeholder="Wants to clear her brother's name…"></textarea>
-  <label for="secret">Secret <button type="button" class="ghost xs dmonly npcd" data-npcdraw="secret" data-scope="f" title="Draw from the NPC deck">Draw</button></label>
+  <label for="secret">Secret <button type="button" class="ghost xs dmonly npcd" data-npcdraw="secret" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="secret" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label>
   <textarea id="secret" rows="2" placeholder="Still owes the thieves' guild a favour…"></textarea>
-  <label for="notes">Backstory <button type="button" class="ghost xs dmonly npcd" data-npcdraw="notes" data-scope="f" title="Draw from the NPC deck">Draw</button></label>
+  <label for="notes">Backstory <button type="button" class="ghost xs dmonly npcd" data-npcdraw="notes" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="notes" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label>
   <textarea id="notes" rows="4" placeholder="Where they came from and how they got here…"></textarea>
   <p class="hint">All optional. <span class="dmonly">Whatever you fill in appears on both sheets.</span><span class="plonly">Whatever you fill in appears on your character sheet.</span></p>
 </fieldset>
@@ -558,17 +560,17 @@ body.compact #dm_close{display:none}
   <div class="seg dmonly" role="radiogroup" aria-label="Character type" style="margin:.5rem 0"><label><input type="radio" name="qb_kind" value="pc" checked><span>Player character</span></label><label><input type="radio" name="qb_kind" value="npc"><span>NPC</span></label></div>
   <div class="npcdeck dmonly"><b>NPC deck</b><button type="button" class="sm" data-npcdraw="all" data-scope="qb">Draw a whole NPC</button><button type="button" class="ghost sm" data-npcdraw="quirk" data-scope="qb" title="Adds an oddly specific quirk to Personality">Add a quirk</button><button type="button" class="ghost sm" id="npcdeck_shuffle">Reshuffle</button><span id="npcdeck_left" class="small muted"></span><p class="hint">Draws a name, role, look, personality, voice, goal, secret and backstory seed from fixed decks of cards (nothing is written by AI). Or use Draw next to any single field. <b>Add a quirk</b> tacks something oddly specific onto Personality; quirks are never part of a whole-NPC draw. You won't see a repeat until a deck runs out.</p></div>
   <div class="qbgrid">
-   <div><label for="qb_name">Name <button type="button" class="ghost xs dmonly npcd" data-npcdraw="name" data-scope="qb" title="Draw from the NPC deck">Draw</button></label><input type="text" id="qb_name" placeholder="e.g. Mirela Voss"></div>
+   <div><label for="qb_name">Name <button type="button" class="ghost xs dmonly npcd" data-npcdraw="name" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="name" data-scope="qb" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label><input type="text" id="qb_name" placeholder="e.g. Mirela Voss"></div>
    <div><label for="qb_player">Player <span class="small dmonly">(blank for NPCs)</span></label><input type="text" id="qb_player"></div>
    <div class="dmonly"><label for="qb_pronoun">Pronouns</label><select id="qb_pronoun"><option value="they">they / them</option><option value="she">she / her</option><option value="he">he / him</option><option value="it">it / its</option></select></div>
    <div><label for="qb_align">Alignment</label><select id="qb_align"></select></div>
   </div>
   <label for="qb_title">Title or role <button type="button" class="ghost xs dmonly npcd" data-npcdraw="title" data-scope="qb" title="Draw from the NPC deck">Draw</button></label><input type="text" id="qb_title" placeholder="e.g. Captain of the Harbour Watch">
-  <label for="qb_appearance">Appearance <button type="button" class="ghost xs dmonly npcd" data-npcdraw="appearance" data-scope="qb" title="Draw from the NPC deck">Draw</button></label><textarea id="qb_appearance" rows="2"></textarea>
-  <label for="qb_personality">Personality <button type="button" class="ghost xs dmonly npcd" data-npcdraw="personality" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs dmonly npcd" data-npcdraw="quirk" data-scope="qb" title="Add an oddly specific quirk">Quirk</button></label><textarea id="qb_personality" rows="2"></textarea>
-  <label for="qb_goals">Goals <button type="button" class="ghost xs dmonly npcd" data-npcdraw="goals" data-scope="qb" title="Draw from the NPC deck">Draw</button></label><textarea id="qb_goals" rows="2"></textarea>
-  <label for="qb_secret">Secret <button type="button" class="ghost xs dmonly npcd" data-npcdraw="secret" data-scope="qb" title="Draw from the NPC deck">Draw</button></label><textarea id="qb_secret" rows="2"></textarea>
-  <label for="qb_notes">Backstory <button type="button" class="ghost xs dmonly npcd" data-npcdraw="notes" data-scope="qb" title="Draw from the NPC deck">Draw</button></label><textarea id="qb_notes" rows="3"></textarea>
+  <label for="qb_appearance">Appearance <button type="button" class="ghost xs dmonly npcd" data-npcdraw="appearance" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="appearance" data-scope="qb" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label><textarea id="qb_appearance" rows="2"></textarea>
+  <label for="qb_personality">Personality <button type="button" class="ghost xs dmonly npcd" data-npcdraw="personality" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="personality" data-scope="qb" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button> <button type="button" class="ghost xs dmonly npcd" data-npcdraw="quirk" data-scope="qb" title="Add an oddly specific quirk">Quirk</button></label><textarea id="qb_personality" rows="2"></textarea>
+  <label for="qb_goals">Goals <button type="button" class="ghost xs dmonly npcd" data-npcdraw="goals" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="goals" data-scope="qb" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label><textarea id="qb_goals" rows="2"></textarea>
+  <label for="qb_secret">Secret <button type="button" class="ghost xs dmonly npcd" data-npcdraw="secret" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="secret" data-scope="qb" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label><textarea id="qb_secret" rows="2"></textarea>
+  <label for="qb_notes">Backstory <button type="button" class="ghost xs dmonly npcd" data-npcdraw="notes" data-scope="qb" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="notes" data-scope="qb" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label><textarea id="qb_notes" rows="3"></textarea>
  </details>
 </div>
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
@@ -4288,6 +4290,30 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
   else npcFill(f,pre+f,sp);
   npcDeckStatus();},true);
 $("npcdeck_shuffle").addEventListener("click",()=>{npcDeckSave({});npcDeckStatus();});
+
+/* ---------- Inspiration: a few ideas from the same decks, for players to pick from (nothing is drawn or used up) ---------- */
+const INSP_SKIP=/\bparty\b|villain|informing|the watch\b/i;
+const sample=(list,n)=>shuffle(list).slice(0,n);
+function inspName(sp){const key=Object.keys(NPC_NAMES).find(k=>String(sp||"").startsWith(k))||"Human",N=NPC_NAMES[key];return `${N.f[Math.floor(Math.random()*N.f.length)]} ${N.s[Math.floor(Math.random()*N.s.length)]}`;}
+function inspIdeas(field,sp){const D=NPC_DECK,ok=l=>l.filter(x=>!INSP_SKIP.test(x));
+  if(field==="name"){const s=new Set();let g=0;while(s.size<3&&g++<30)s.add(inspName(sp));return [...s];}
+  if(field==="appearance")return sample(D.appearance,3).map(x=>x+".");
+  if(field==="personality"){const t=sample(D.temperament,3),m=sample(D.mannerism,3);return [...t.map((x,i)=>`${x}; ${m[i]}.`),`Quirk: ${sample(D.quirk,1)[0]}.`];}
+  if(field==="goals")return sample(ok(D.goal),3).map(x=>x+".");
+  if(field==="secret")return sample(ok(D.secret),3).map(x=>x+".");
+  if(field==="notes")return sample(D.backstory,3).map(x=>x+".");
+  return [];}
+function inspOpen(btn){const f=btn.dataset.insp,qb=btn.dataset.scope==="qb",el=$((qb?"qb_":"")+f);if(!el)return;
+  const old=el.parentNode.querySelector(`.inspbox[data-for="${el.id}"]`);
+  if(old&&!btn.classList.contains("inspmore")){old.remove();btn.setAttribute("aria-expanded","false");return;}
+  const ideas=inspIdeas(f,qb?$("qb_sp").value:S.sp);
+  const box=old||document.createElement("div");box.className="inspbox";box.dataset.for=el.id;box.setAttribute("role","group");box.setAttribute("aria-label","Ideas");
+  box.innerHTML=`<div class="insph">Tap one to ${f==="name"?"use it":"add it"}:</div>${ideas.map(x=>`<button type="button" class="ghost inspopt" data-inspick="${esc(el.id)}">${esc(x)}</button>`).join("")}<div class="inspf"><button type="button" class="ghost xs insp inspmore" data-insp="${f}" data-scope="${btn.dataset.scope}">Other ideas</button><button type="button" class="ghost xs" data-inspclose="1">Close</button></div>`;
+  if(!old)el.insertAdjacentElement("afterend",box);btn.setAttribute("aria-expanded","true");}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-insp],[data-inspick],[data-inspclose]");if(!b)return;e.preventDefault();e.stopPropagation();
+  if(b.dataset.inspclose){b.closest(".inspbox").remove();return;}
+  if(b.dataset.inspick){const el=$(b.dataset.inspick),v=b.textContent;el.value=el.id.endsWith("name")?v:(el.value.trim()?el.value.trim()+" ":"")+v;el.dispatchEvent(new Event("input",{bubbles:true}));const box=b.closest(".inspbox");if(box)box.remove();el.focus();return;}
+  inspOpen(b);},true);
 
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
