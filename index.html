@@ -3408,7 +3408,7 @@ function lvApply(tgt){
   if(!S.gearTouched){S.gear=kitGear();$("gear").value=S.gear;}}
 function lvEntry(){const t=LV.tgt;if(t==="p")return classEntries()[0];const i=t.startsWith("m:")?+t.slice(2):S.mc.length-1;return {...S.mc[i],idx:i};}
 function openLevelUp(){
-  if(charLevel()>=20){alert("This character is already level 20.");return;}
+  if(charLevel()>=20){rsStatus("This character is already level 20, the highest level.");return;}
   LV={from:lvState(),tgt:"p"};lvApply("p");
   $("level").value=String(S.level);renderAll();renderLevelUp();
   const dlg=$("lvlup");if(dlg.showModal&&!dlg.open)dlg.showModal();else dlg.setAttribute("open","");
