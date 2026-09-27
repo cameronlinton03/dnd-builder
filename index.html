@@ -191,6 +191,8 @@ button.danger-t{color:var(--warn)}
 button.armed,button.armed:hover{background:var(--warn)!important;border-color:var(--warn)!important;color:#fff!important}
 dialog#sbview{max-width:760px;width:96vw;height:88vh;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:0;overflow:hidden}dialog#sbview[open]{display:flex;flex-direction:column}dialog#sbview::backdrop{background:rgba(20,16,10,.45)}#sb_frame{flex:1;border:0;width:100%;background:#fff}
 @media(max-width:620px){.nted,.ntform{grid-template-columns:1fr}.dmtabs{margin-left:0}}
+#wipe{max-width:1240px;margin:1.2rem auto 0;padding:0 16px .4rem}
+.wipebox{border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius);background:var(--panel);padding:.6rem .8rem;max-width:560px;font-size:.9rem}.wipebox p{margin:.35rem 0}.wipebox ul{margin:.2rem 0 .4rem;padding-left:1.2rem}
 .dmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.9rem}
 .dmcard{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:var(--radius);padding:.65rem .75rem;min-width:0}
 .dmcard.bloodied{border-left-color:var(--amber)}.dmcard.down{border-left-color:var(--warn)}
@@ -610,6 +612,7 @@ body.compact #dm_close{display:none}
 <dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
 <nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">Campaign</button></nav>
+<div id="wipe" class="dmonly"><button type="button" class="ghost xs" data-wipe="start">Clear all saved data</button></div>
 <footer style="max-width:1240px;margin:0 auto;padding:0 16px 2rem;font-size:.74rem;color:var(--ink-soft)">Rules text and spells are from the System Reference Document 5.2 by Wizards of the Coast LLC (dndbeyond.com/srd), licensed CC BY 4.0. Spell data compiled by the 5e-bits/5e-database project (MIT licence).</footer>
 
 <script>
@@ -4543,6 +4546,35 @@ $("idea_build").addEventListener("click",()=>{const d=ideaDetails(),keep={...IDE
   $("qb_cls").value=keep.cls;$("qb_sp").value=keep.sp;$("qb_bg").value=keep.bg;
   Object.entries(d).forEach(([k,v])=>{const el=$("qb_"+k);if(el)el.value=v;});
   const r=document.querySelector('input[name=qb_kind][value="pc"]');if(r)r.checked=true;});
+
+/* ---------- clear all saved data (DM mode only; several steps, nothing happens until the last one) ---------- */
+const WIPE={step:0};
+function wipeCounts(){const on=!!RS.db&&!RS.off;return {on,chars:on?RS.chars.length:0,camps:on?RS.camps.length:0,cres:on?(RS.cres||[]).length:0};}
+function renderWipe(){const box=$("wipe"),n=wipeCounts(),e=esc;
+  if(!WIPE.step){box.innerHTML=`<button type="button" class="ghost xs" data-wipe="start">Clear all saved data</button>`;return;}
+  const what=`<ul>${n.on?`<li><b>${n.chars}</b> saved character${n.chars===1?"":"s"} in your roster (player characters and NPCs)</li><li><b>${n.camps}</b> campaign${n.camps===1?"":"s"}, with their tags</li><li><b>${n.cres}</b> creature${n.cres===1?"":"s"} and monster${n.cres===1?"":"s"} you've added</li>`:""}<li>The character open in the builder, and everything this browser remembers: theme, NPC deck, the fight in progress, and your settings</li></ul>`;
+  const step=[null,
+   `<p><b>Warning 1 of 3.</b> This permanently deletes:</p>${what}<p>There is no undo, and no copy is kept anywhere. Save any character you want to keep with <b>Share character sheet</b> first.</p><div class="ntbtns"><button type="button" class="sm danger" data-wipe="next">I understand, continue</button><button type="button" class="ghost sm" data-wipe="cancel">Cancel</button></div>`,
+   `<p><b>Warning 2 of 3.</b> Are you sure? Your players' characters are only safe if they still have their own copies.</p><label class="chk"><input type="checkbox" id="wipe_ok"> I understand this cannot be undone</label><div class="ntbtns"><button type="button" class="sm danger" data-wipe="next2">Continue</button><button type="button" class="ghost sm" data-wipe="cancel">Cancel</button></div>`,
+   `<p><b>Warning 3 of 3.</b> Type <b>DELETE</b> to confirm.</p><input type="text" id="wipe_word" autocomplete="off" aria-label="Type DELETE to confirm" style="max-width:12rem"><div class="ntbtns"><button type="button" class="sm danger" data-wipe="go">Delete everything forever</button><button type="button" class="ghost sm" data-wipe="cancel">Cancel</button></div>`,
+   `<p>Deleting…</p>`][WIPE.step];
+  box.innerHTML=`<div class="wipebox" role="alertdialog" aria-label="Clear all saved data">${step}<p class="small warnx" id="wipe_msg"></p></div>`;}
+async function wipeAll(){WIPE.step=4;renderWipe();const n=wipeCounts();
+  try{if(n.on){const del=(col,list)=>Promise.all(list.map(x=>col.doc(x.id).delete()));
+      await del(RS.charCol,[...RS.chars]);if(RS.creCol)await del(RS.creCol,[...(RS.cres||[])]);await del(RS.campCol,[...RS.camps]);}
+  }catch(e){writeErr(e);}
+  try{Object.keys(localStorage).filter(k=>k.startsWith("ledger_")).forEach(k=>localStorage.removeItem(k));}catch(e){}
+  document.documentElement.removeAttribute("data-palette");document.documentElement.removeAttribute("data-theme");
+  clearTimeout(RS.timer);RS.curId=null;RS.lastKey="";FIGHT={on:false,round:1,cur:null,list:[]};DMV.camp=null;DMV.tagf=[];
+  if(document.body.classList.contains("dmmode"))closeDM();
+  S=defaults();onClassChange();syncStatic();renderAll();markPristine();try{localStorage.removeItem("ledger_v2");}catch(e){}
+  WIPE.step=0;renderWipe();rsStatus("All saved data has been deleted. You're starting fresh.");window.scrollTo({top:0});}
+$("wipe").addEventListener("click",e=>{const b=e.target.closest("[data-wipe]");if(!b)return;const k=b.dataset.wipe,msg=()=>$("wipe_msg");
+  if(k==="start"){WIPE.step=1;renderWipe();return;}
+  if(k==="cancel"){WIPE.step=0;renderWipe();return;}
+  if(k==="next"){WIPE.step=2;renderWipe();return;}
+  if(k==="next2"){if(!$("wipe_ok").checked){msg().textContent="Tick the box to continue.";return;}WIPE.step=3;renderWipe();setTimeout(()=>$("wipe_word").focus(),0);return;}
+  if(k==="go"){if($("wipe_word").value.trim()!=="DELETE"){msg().textContent="Type DELETE (in capitals) to confirm.";return;}wipeAll();}});
 
 /* ================= PHONE LAYOUT =================
    Under 960px wide: tabs along the bottom (Build, Sheet, Play, DM) and the build steps one at a time. */
