@@ -294,7 +294,7 @@ body.compact .rbar .inner{flex-wrap:wrap}
 body.compact .rb-actions{display:none}
 body.compact.mmenu .rb-actions{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;width:100%;padding:.3rem 0 .2rem}
 body.compact.mmenu .rb-actions>*{width:100%;margin:0}
-body.compact #play_btn{display:none}
+body.compact #dm_btn,body.compact #play_btn{display:none}
 body.compact{padding-bottom:calc(62px + env(safe-area-inset-bottom,0px))}
 body.compact .grid{margin-top:.8rem}
 body.compact .preview{position:static}
@@ -341,12 +341,13 @@ body.compact #dm_close{display:none}
       <label class="sr" for="r_camp">Campaign</label>
       <select id="r_camp" class="ononly"></select>
       <button type="button" id="r_save" class="ononly">Save to roster</button>
-      <button type="button" class="ghost dmonly" id="dm_btn" aria-pressed="false">DM view</button>
       <button type="button" id="r_filesave" class="plonly offshow" data-share="1" title="Shares a printable PDF of the sheet plus the character file (which opens in this builder). Send them to your DM, or save them as a backup.">Share character sheet</button>
       <button type="button" class="ghost plonly offshow" id="r_fileopen" title="Open a character file saved from this builder">Open a file</button>
       <button type="button" class="ghost" id="lv_btn">Level up</button>
       <button type="button" class="ghost" id="r_new">New character</button>
       <button type="button" id="qb_btn">Quick build</button>
+      <button type="button" class="ghost dmonly" id="dm_btn" aria-pressed="false">DM view</button>
+      <button type="button" class="ghost" id="view_btn" aria-pressed="false" title="Shows or hides the DM-only tools: NPC stat blocks, challenge rating, the NPC deck and the DM view">Show DM tools</button>
       <button type="button" class="ghost ononly" id="r_toggle" aria-expanded="false" aria-controls="roster">My characters</button>
     </div>
   </div>
@@ -574,8 +575,7 @@ body.compact #dm_close{display:none}
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
 <dialog id="rollbox" aria-labelledby="roll_title"><div class="lvhead"><b id="roll_title">What to roll</b><button type="button" class="ghost sm" id="roll_x" aria-label="Close">×</button></div><div id="roll_body"></div></dialog>
 <dialog id="lvlup" aria-labelledby="lv_title"><div class="lvhead"><b id="lv_title">Level up</b><button type="button" class="ghost sm" id="lv_x" aria-label="Close">×</button></div><div id="lv_body"></div><div class="lvfoot"><span id="lv_status" class="hint"></span><button type="button" class="ghost sm" id="lv_undo">Undo level up</button><button type="button" id="lv_done">Done</button></div></dialog>
-<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button></nav>
-<div class="viewsw" id="viewsw"><span>Showing: <span class="vtag" id="view_tag">Player view</span></span><button type="button" class="ghost sm" id="view_btn" aria-pressed="false">Show DM tools</button><span class="small" id="view_note"></span></div>
+<nav id="mtabs" aria-label="Views" role="tablist"><button type="button" role="tab" data-tab="build">Build</button><button type="button" role="tab" data-tab="sheet">Sheet</button><button type="button" role="tab" data-tab="dm" class="dmonly">DM</button></nav>
 <footer style="max-width:1240px;margin:0 auto;padding:0 16px 2rem;font-size:.74rem;color:var(--ink-soft)">Rules text and spells are from the System Reference Document 5.2 by Wizards of the Coast LLC (dndbeyond.com/srd), licensed CC BY 4.0. Spell data compiled by the 5e-bits/5e-database project (MIT licence).</footer>
 
 <script>
@@ -4358,8 +4358,7 @@ let VIEW_SAVED=null;try{VIEW_SAVED=localStorage.getItem("ledger_view");}catch(e)
 document.body.classList.toggle("pview",VIEW_SAVED!=="dm");
 function setView(v,persist){const p=v!=="dm";document.body.classList.toggle("pview",p);
   if(p&&document.body.classList.contains("dmmode"))closeDM();
-  $("view_tag").textContent=p?"Player view":"DM view";$("view_btn").textContent=p?"Show DM tools":"Switch to player view";$("view_btn").setAttribute("aria-pressed",String(!p));
-  $("view_note").textContent=p?"":"NPC stat blocks, challenge rating and the DM party view are showing.";
+  $("view_btn").textContent=p?"Show DM tools":"Hide DM tools";$("view_btn").setAttribute("aria-pressed",String(!p));
   if(persist){VIEW_SAVED=p?"player":"dm";try{localStorage.setItem("ledger_view",VIEW_SAVED);}catch(e){}}
   syncTips();renderRosterBar();schedulePreview(true);if(MB.on&&p&&MB.tab==="dm")mTab("build");}
 $("view_btn").addEventListener("click",()=>setView(isPlayerView()?"dm":"player",true));
