@@ -557,6 +557,7 @@ body.compact #dm_close{display:none}
     <div><label for="align">Alignment</label>
     <select id="align"><option value="">—</option><option>Lawful Good</option><option>Neutral Good</option><option>Chaotic Good</option><option>Lawful Neutral</option><option>Neutral</option><option>Chaotic Neutral</option><option>Lawful Evil</option><option>Neutral Evil</option><option>Chaotic Evil</option></select></div>
     <div class="dmonly"><label for="cr">Challenge rating <span class="small">(NPC sheets)</span></label><select id="cr"></select></div>
+    <div class="dmonly"><label for="tmpl">Lichdom <span class="small">(NPC sheets)</span></label><select id="tmpl"><option value="">Not a lich</option><option value="lich">Lich</option><option value="lichproj">Lich's projection (looks alive)</option></select></div>
   </div>
   <p class="hint dmonly" id="cr_hint" aria-live="polite"></p>
   <label for="appearance">Appearance <button type="button" class="ghost xs dmonly npcd" data-npcdraw="appearance" data-scope="f" title="Draw from the NPC deck">Draw</button> <button type="button" class="ghost xs plonly insp" data-insp="appearance" data-scope="f" aria-expanded="false" title="Show a few ideas to choose from">Inspiration</button></label>
@@ -1092,7 +1093,7 @@ const WEAPONS={
 
 /* ================= STATE ================= */
 const $=id=>document.getElementById(id);
-const defaults=()=>({sp2:"",lang:{},npcMeta:{tags:[],status:"alive",att:"neutral",note:""},cls:"Fighter",level:1,sub:"",subOther:"",sp:"Human",spChoice:"",keen:"Perception",spSkills:[],spAb:"",humanFeat:"Tough",size:"Medium",asiFeat:[],inv:[],invX:[],
+const defaults=()=>({sp2:"",tmpl:"",lang:{},npcMeta:{tags:[],status:"alive",att:"neutral",note:""},cls:"Fighter",level:1,sub:"",subOther:"",sp:"Human",spChoice:"",keen:"Perception",spSkills:[],spAb:"",humanFeat:"Tough",size:"Medium",asiFeat:[],inv:[],invX:[],
   bg:"Soldier",bgmode:"21",plus2:"",plus1:"",bgTool:"",method:"array",scores:{},asi:[],boon:"",
   classSkills:[],extraSkills:[],expertise:[],armor:"",shield:false,weapons:[],gear:"",gearTouched:false,
   name:"",player:"",align:"",notes:"",title:"",cr:"",pronoun:"they",appearance:"",personality:"",goals:"",secret:"",mode:"pc",opts:{},kind:"pc",campaign:"",spells:{pick:{},land:"Temperate"},track:{slots:{},pact:0,used:{},conc:"",log:"",hp:null,temp:0,ds:[0,0],hd:0,res:{},insp:false,cond:[],exh:0},items:[],money:{pp:0,gp:0,ep:0,sp:0,cp:0},mastery:[],hpRolls:{},tips:true,mc:[],mcSkills:{},dataV:2,
@@ -1706,7 +1707,7 @@ function initStatic(){
 }
 function syncStatic(){ // push state into static inputs
   $("cls").value=S.cls;$("level").value=String(S.level);$("sp").value=S.sp;$("bg").value=S.bg;
-  PERSONA.forEach(k=>$(k).value=S[k]||"");$("align").value=S.align;$("cr").value=S.cr||"";$("pronoun").value=S.pronoun||"they";$("gear").value=S.gear;$("sub_other").value=S.subOther;
+  PERSONA.forEach(k=>$(k).value=S[k]||"");$("align").value=S.align;$("cr").value=S.cr||"";$("tmpl").value=LICH_KINDS[S.tmpl]?S.tmpl:"";$("pronoun").value=S.pronoun||"they";$("gear").value=S.gear;$("sub_other").value=S.subOther;
   const cc=S.cc;$("cc_name").value=cc.name;$("cc_die").value=cc.die;$("cc_caster").value=cc.caster;$("cc_cast").value=cc.cast;$("cc_save1").value=cc.s1;$("cc_save2").value=cc.s2;$("cc_skills").value=cc.skills;$("cc_asi").value=cc.asi;$("cc_road").value=cc.road;
   const sc=S.spc;$("spc_name").value=sc.name;$("spc_size").value=sc.size;$("spc_speed").value=sc.speed;$("spc_dark").value=sc.dark;$("spc_traits").value=sc.traits;
   const g=S.bgc;$("bgc_name").value=g.name;$("bgc_sk1").value=g.sk1;$("bgc_sk2").value=g.sk2;$("bgc_tool").value=g.tool;$("bgc_feat").value=g.feat;$("bgc_a1").value=g.a1;$("bgc_a2").value=g.a2;$("bgc_a3").value=g.a3;
@@ -1940,7 +1941,7 @@ function applyFormChange(t){const id=t.id;
   else if(id==="armor"){S.armor=t.value;}
   else if(id==="shield"){S.shield=t.checked;}
   else if(id==="add_weapon"){if(t.value&&!S.weapons.includes(t.value))S.weapons.push(t.value);t.value="";}
-  else if(id.startsWith("cc_")||id.startsWith("spc_")||id.startsWith("bgc_")||id==="align"||id==="cr"||id==="pronoun"){readText(t);}
+  else if(id.startsWith("cc_")||id.startsWith("spc_")||id.startsWith("bgc_")||id==="align"||id==="cr"||id==="pronoun"||id==="tmpl"){readText(t);}
 }
 f.addEventListener("change",formChange);
 f.addEventListener("input",e=>{const t=e.target;if(t.closest("#spells_step"))return;if(t.tagName==="SELECT"||t.type==="checkbox"||t.type==="radio")return;
@@ -1950,7 +1951,7 @@ f.addEventListener("input",e=>{const t=e.target;if(t.closest("#spells_step"))ret
   schedulePreview();save();});
 function readText(t){const id=t.id,v=t.value;
   if(PERSONA.includes(id))S[id]=v;
-  else if(id==="align"||id==="cr"||id==="pronoun")S[id]=v;
+  else if(id==="align"||id==="cr"||id==="pronoun"||id==="tmpl")S[id]=v;
   else if(id==="gear"){S.gear=v;S.gearTouched=true;}
   else if(id==="sub_other")S.subOther=v;
   else if(id.startsWith("cc_"))S.cc[{cc_name:"name",cc_die:"die",cc_caster:"caster",cc_cast:"cast",cc_save1:"s1",cc_save2:"s2",cc_skills:"skills",cc_asi:"asi",cc_road:"road"}[id]]=v;
@@ -2770,6 +2771,27 @@ function npcModel(you){
   s.condImm=ci;
   return s;
 }
+/* Lichdom for NPCs: an adaptation of the SRD 5.2 Lich, scaled to the NPC's level (the rules have no lich template).
+   "lich" is the true lich; "lichproj" is a lesser projection that looks as the lich did in life. */
+const LICH_KINDS={lich:"Lich",lichproj:"Lich's projection"};
+function lichNums(s){const kind=S.tmpl;if(!LICH_KINDS[kind])return null;
+  const TL=s.TL||s.level||1,tier=TL>=17?4:TL>=11?3:TL>=5?2:1,cast=s.caster&&s.caster.cast,ab=cast||bestMental(s.mods),mod=s.mods[ab];
+  const dc=cast&&s.dc?s.dc:8+s.pb+mod,atk=cast&&s.atk!=null?s.atk:s.pb+mod,full=kind==="lich";
+  const burst=`${tier}d12`,touch=`${Math.min(tier,3)}d6`,dl=`${[3,5,7,9][tier-1]}d6`,tp=`${Math.ceil(tier/2)}d10`;
+  return {kind,full,tier,ab,mod,dc,atk,n:tier>=3?3:tier,burst,touch,dl,tp,lr:full?tier:0,la:full?3:0,burstAvg:Math.max(1,avgOf(burst)+mod),dlAvg:avgOf(dl)};}
+function lichKit(s,first){const k=lichNums(s);if(!k)return null;const it=k.full?"the lich":"the projection";
+  const o={k,ctype:"Undead",res:["Cold","Lightning"],imm:["Necrotic","Poison"],ci:["Charmed","Exhaustion","Frightened","Paralyzed","Poisoned"],senses:k.full?["Truesight 120 ft."]:[],traits:[],acts:[],reacts:[],legend:[],legIntro:""};
+  if(k.full){o.traits.push([`Legendary Resistance (${k.lr}/Day)`,`If ${first} fails a saving throw, ${first} can choose to succeed instead.`]);
+    o.traits.push(["Spirit Jar",`If destroyed, ${first} reforms in 1d10 days if ${first} has a spirit jar, reviving with all Hit Points. The new body appears in an unoccupied space within ${first}'s lair.`]);}
+  else o.traits.push(["Projected Form",`This is a lesser projection of a lich, wearing the appearance the lich had in life. Nothing about it looks undead; Truesight, or magic that detects Undead, reveals what it is. When it drops to 0 Hit Points it crumbles to dust, and the lich itself is unharmed and knows what the projection saw and heard.`]);
+  o.acts.push(["Eldritch Burst",`Melee or Ranged Attack Roll: ${fmt(k.atk)}, reach 5 ft. or range 120 ft. Hit: ${avgTxt(k.burst,k.mod)} Force damage.`]);
+  o.acts.push(["Paralyzing Touch",`Melee Attack Roll: ${fmt(k.atk)}, reach 5 ft. Hit: ${avgTxt(k.touch,k.mod)} Cold damage, and the target ${k.full?"has":`must succeed on a DC ${k.dc} Constitution saving throw or have`} the Paralyzed condition until the start of ${first}'s next turn.`]);
+  if(k.full){o.reacts.push(["Protective Magic",`${first} casts Counterspell or Shield in response to the spell's trigger, using ${AF[k.ab]} as the spellcasting ability (spell save DC ${k.dc}).`]);
+    o.legIntro=`Legendary Action Uses: ${k.la}. Immediately after another creature's turn, ${first} can expend a use to take one of the following actions. ${first} regains all expended uses at the start of each of ${first}'s turns.`;
+    o.legend.push(["Deathly Teleport",`${first} teleports up to 60 feet to an unoccupied space ${first} can see, and each creature within 10 feet of the space ${first} left takes ${avgTxt(k.tp,0)} Necrotic damage.`]);
+    o.legend.push(["Disrupt Life",`Constitution Saving Throw: DC ${k.dc}, each creature that isn't an Undead in a 20-foot Emanation originating from ${first}. Failure: ${avgTxt(k.dl,0)} Necrotic damage. Success: Half damage. Failure or Success: ${first} can't take this action again until the start of ${first}'s next turn.`]);
+    o.legend.push(["Frightening Gaze",`${first} casts Fear, using ${AF[k.ab]} as the spellcasting ability (spell save DC ${k.dc}). ${first} can't take this action again until the start of ${first}'s next turn.`]);}
+  return o;}
 function attackLine(a,first){
   const hit=fmt(a.hit),dmg=avgTxt(a.die,a.m),ty=cap(a.type);
   let roll;
@@ -2786,13 +2808,14 @@ function npcHTML(){
   const s=npcModel(),e=esc,o=s.out,first=s.first,L=s.level;
   const typeTag=mixLabel()?mixLabel():s.sp.src?[s.sp.tag,s.sp.sub].filter(Boolean).join(", "):(s.sp.custom?s.sp.name:s.sp.name.replace(/^Dragonborn \(.*\)$/,"Dragonborn").replace(/^(Goliath|Tiefling) \(.*\)$/,"$1"));
   const size=/Medium or Small/.test(s.sp.size)?"Medium":s.sp.size;
-  const creature=`${size} ${e(s.sp.ctype||"Humanoid")} (${e(typeTag)})${S.align?`, ${e(S.align)}`:""}`;
+  const lk=lichKit(s,first);
+  const creature=`${size} ${e(lk?lk.ctype:(s.sp.ctype||"Humanoid"))} (${e(typeTag)})${S.align?`, ${e(S.align)}`:""}`;
   const conTotal=s.hp-s.hd.reduce((a,x)=>a+avgOf(`${x.n}d${x.die}`),0);
   const hpFormula=`${s.hd.map(x=>`${x.n}d${x.die}`).join(" + ")}${conTotal?` ${sgn(conTotal)}`:""}`;
   const abRow=a=>{const sv=s.saves.find(x=>x.a===a);return `<tr><th>${cap(a)}</th><td>${s.scores[a]}</td><td>${fmt(s.mods[a])}</td><td>${fmt(sv.bonus)}</td></tr>`;};
   const abTable=list=>`<table class="abt"><tr><th></th><th></th><th>Mod</th><th>Save</th></tr>${list.map(abRow).join("")}</table>`;
   const skills=s.skills.filter(x=>x.prof).map(x=>`${x.name} ${fmt(x.bonus)}`).join(", ");
-  const senses=[s.blind?`Blindsight ${s.blind} ft.`:"",s.sp.dark?`Darkvision ${s.sp.dark} ft.`:"",...s.moreSenses.map(x=>x+"."),`Passive Perception ${s.passive}`].filter(Boolean).join(", ");
+  const senses=[s.blind?`Blindsight ${s.blind} ft.`:"",s.sp.dark?`Darkvision ${s.sp.dark} ft.`:"",...s.moreSenses.map(x=>x+"."),`Passive Perception ${s.passive}`].filter(Boolean);if(lk)senses.unshift(...lk.senses);
   const langs=s.langs.map(l=>l.replace(/ (more )?(languages?) of your choice$/," other $2")).join(", ");
   const gear=[s.armorKey!=="none"?s.arm.name+(/(Mail|Shirt|Breastplate)$/.test(s.arm.name)?"":" Armor"):"",s.shield?"Shield":"",...S.weapons].filter(Boolean);
   const held=(S.items||[]).filter(it=>(it.name||it.preset)&&(it.qty??1)>0);
@@ -2804,8 +2827,11 @@ function npcHTML(){
   const sec=(title,list)=>list.length?`<h3>${title}</h3>${list.map(([n,t])=>`<p><b><i>${e(n)}.</i></b> ${e(capS(t))}</p>`).join("")}`:"";
   // actions
   const acts=[];
-  if(s.multiatk) acts.push(`<p><b><i>Multiattack.</i></b> ${e(first)} makes ${["","","two","three","four"][s.multiatk]} weapon attacks${lvlIn("Monk")?", and can follow them with a Martial Arts strike as a Bonus Action":""}.</p>`);
   const weaponAtks=s.attacks.filter(a=>!a.unarmed);
+  const lichN=lk?Math.max(lk.k.n,s.multiatk||1):0;
+  if(lk&&lichN>1) acts.push(`<p><b><i>Multiattack.</i></b> ${e(first)} makes ${["","","two","three","four"][lichN]} attacks, using Eldritch Burst${weaponAtks.length?", Paralyzing Touch or a weapon":" or Paralyzing Touch"} in any combination${lvlIn("Monk")?", and can follow them with a Martial Arts strike as a Bonus Action":""}.</p>`);
+  else if(s.multiatk) acts.push(`<p><b><i>Multiattack.</i></b> ${e(first)} makes ${["","","two","three","four"][s.multiatk]} weapon attacks${lvlIn("Monk")?", and can follow them with a Martial Arts strike as a Bonus Action":""}.</p>`);
+  if(lk) lk.acts.forEach(([n,t])=>acts.push(`<p><b><i>${e(n)}.</i></b> ${e(t)}</p>`));
   weaponAtks.forEach(a=>acts.push(attackLine(a,first)));
   const ua=s.attacks.find(a=>a.unarmed);
   if(lvlIn("Monk")||ua.natural||s.feats.includes("Tavern Brawler")||!weaponAtks.length) acts.push(attackLine(ua,first));
@@ -2847,19 +2873,21 @@ function npcHTML(){
  <div class="abwrap">${abTable(["str","dex","con"])}${abTable(["int","wis","cha"])}</div>
  <div class="rule"></div>
  ${line("Skills",e(skills))}
- ${line("Resistances",e(s.res.join(", ")))}
- ${line("Condition Immunities",e(s.condImm.join(", ")))}
+ ${line("Resistances",e([...new Set([...s.res,...(lk?lk.res:[])])].filter(x=>!lk||!lk.imm.includes(x)).join(", ")))}
+ ${lk?line("Immunities",e(lk.imm.join(", "))):""}
+ ${line("Condition Immunities",e([...new Set([...s.condImm,...(lk?lk.ci:[])])].join(", ")))}
  ${gear.length?line("Gear",e(gear.join(", "))):""}
- ${line("Senses",e(senses))}
+ ${line("Senses",e(senses.join(", ")))}
  ${line("Languages",e(langs))}
  ${line("CR",cr)}
  ${line("Encounter",e(encounterText(crv)))}
  <p class="who">${who}</p>
  <div class="rule"></div>
- ${sec("Traits",o.t)}
+ ${sec("Traits",[...o.t,...(lk?lk.traits:[])])}
  ${acts.length?`<h3>Actions</h3>${capS(acts.join(""))}`:""}
  ${sec("Bonus Actions",o.b)}
- ${sec("Reactions",o.r)}
+ ${sec("Reactions",[...o.r,...(lk?lk.reacts:[])])}
+ ${lk&&lk.legend.length?`<h3>Legendary Actions</h3><p class="legintro">${e(lk.legIntro)}</p>${lk.legend.map(([n,t])=>`<p><b><i>${e(n)}.</i></b> ${e(t)}</p>`).join("")}`:""}
  ${sec("Magic Items",magic)}
 </div>
 ${lore.length?`<div class="lore"><h2>About ${e(first)}</h2>${lore.map(([k,v])=>`<p><b>${k}.</b> <span class="pre">${e(v)}</span></p>`).join("")}</div>`:""}
@@ -2906,6 +2934,7 @@ function estimateCR(){
   const bpsRes=lv("Barbarian")>0||lv("Monk")>=18;
   const rawIdx=idxBy(hp,1);
   if(bpsRes){const cr=rawIdx; hp=Math.round(hp*(cr<=7?2:cr<=13?1.5:cr<=19?1.25:1));}
+  {const lk0=lichNums(s);if(lk0&&lk0.lr)hp+=lk0.lr*(lk0.tier<=1?10:lk0.tier===2?20:30);}
   let dIdx=idxBy(hp,1);
   const nSaves=s.saves.filter(x=>x.prof).length;
   const effAC=s.ac+(nSaves>=5?2:nSaves>=3?1:0)+(s.aura?1:0);
@@ -2943,11 +2972,13 @@ function estimateCR(){
     const slots=[...(s.slots.pact?Array(s.slots.pact.count).fill(s.slots.pact.lvl):[]),...s.slots.slots.flatMap((cnt,i)=>Array(cnt).fill(i+1))].sort((a,b)=>b-a);
     for(let r=0;r<3;r++) sp[r]=Math.max(cantrip,slots[r]?SPELL_DMG[slots[r]]:0);
   }
-  const rounds=w.map((x,i)=>{if(sp[i]>x){spellUsed=true;return sp[i];}return x;});
+  const lkn=lichNums(s);let lichAtk=false;
+  if(lkn){const lr=lkn.n*lkn.burstAvg;for(let r=0;r<3;r++)if(lr>w[r]){w[r]=lr;lichAtk=true;}}
+  const rounds=w.map((x,i)=>{if(sp[i]>x){spellUsed=true;return sp[i];}return x;}).map(x=>x+(lkn&&lkn.full?lkn.dlAvg:0));
   const dpr=(rounds[0]+rounds[1]+rounds[2])/3;
   let oIdx=idxBy(Math.round(dpr),3);
   const useDC=spellUsed&&k0;
-  const atkBonus=useDC?k0.dc:(best?best.a.hit:s.pb);
+  const atkBonus=useDC?k0.dc:lichAtk?lkn.atk:(best?best.a.hit:s.pb);
   oIdx=clampI(oIdx+Math.trunc((atkBonus-CR_TABLE[oIdx][useDC?4:2])/2));
   const idx=clampI(Math.round((dIdx+oIdx)/2));
   return {cr:CR_LIST[idx],dCR:CR_LIST[dIdx],oCR:CR_LIST[oIdx],dpr:Math.round(dpr),effHP:hp};
@@ -4732,8 +4763,8 @@ function sbFromNPC(st){return withState(st,()=>{const s=snapshot(),doc=new DOMPa
   const est=estimateCR();
   return {name:S.name||"Unnamed",size:m[1]||"Medium",type:(m[2]||"Humanoid").trim(),subtype:m[3]||"",alignment:m[4]||S.align||"",ac:s.ac,acNote:s.acNote||"",init:s.init,hp:s.hp,hitDice:hpm[2]||"",
     speed:lineOf("Speed"),stats:AB.map(a=>s.scores[a]),saves:s.saves.filter(x=>x.prof).map(x=>[AB_FULL[AB.indexOf(x.a)],x.bonus]),skills:s.skills.filter(x=>x.prof).map(x=>[x.name,x.bonus]),
-    vul:"",res:lineOf("Resistances"),imm:"",ci:lineOf("Condition Immunities"),gear:lineOf("Gear"),senses:lineOf("Senses"),languages:lineOf("Languages"),cr:S.cr||est.cr,
-    traits:secs["Traits"]||[],actions:secs["Actions"]||[],bonus:secs["Bonus Actions"]||[],reactions:secs["Reactions"]||[],legendary:[],items:secs["Magic Items"]||[],role:S.title||"",
+    vul:"",res:lineOf("Resistances"),imm:lineOf("Immunities"),ci:lineOf("Condition Immunities"),gear:lineOf("Gear"),senses:lineOf("Senses"),languages:lineOf("Languages"),cr:S.cr||est.cr,
+    traits:secs["Traits"]||[],actions:secs["Actions"]||[],bonus:secs["Bonus Actions"]||[],reactions:secs["Reactions"]||[],legendary:(secs["Legendary Actions"]||[]).filter(x=>x[0]),legIntro:((secs["Legendary Actions"]||[]).find(x=>!x[0])||["",""])[1],items:secs["Magic Items"]||[],role:S.title||"",
     carried:[String(S.gear||"").split(/\n+/).map(x=>x.trim().replace(/[.;,]+$/,"")).filter(Boolean).join("; "),["pp","gp","ep","sp","cp"].filter(k=>+(S.money||{})[k]).map(k=>`${(+S.money[k]).toLocaleString()} ${k}`).join(", ")].filter(Boolean).join("; ")};});}
 function sbFromBlock(b){const md=v=>Math.floor((v-10)/2),ab=b.ab||[10,10,10,10,10,10];
   const pairs=str=>(str||"").split(/,\s*/).map(x=>{const m=/^(.*?)\s*([+−-]\d+)$/.exec(x.trim());return m?[m[1],+m[2].replace("−","-")]:null;}).filter(Boolean);
@@ -4751,6 +4782,7 @@ function toFantasyStatblock(d){const L=["```statblock","layout: Basic 5e Layout"
   [["damage_vulnerabilities",d.vul],["damage_resistances",d.res],["damage_immunities",d.imm],["condition_immunities",d.ci],["senses",d.senses],["languages",d.languages]].forEach(([k,v])=>{if(v)L.push(`${k}: ${yq(v)}`);});
   L.push(`cr: ${yq(d.cr)}`);
   const tr=[...(d.traits||[])];if(d.gear)tr.push(["Gear",d.gear]);if(d.carried)tr.push(["Possessions",d.carried]);(d.items||[]).forEach(([n,t])=>tr.push([`Magic Item: ${n}`,t]));
+  if(d.legIntro&&d.legendary&&d.legendary.length)L.push(`legendary_description: ${yq(d.legIntro)}`);
   [["traits",tr],["actions",d.actions],["bonus_actions",d.bonus],["reactions",d.reactions],["legendary_actions",d.legendary]].forEach(([k,l])=>{if(!l||!l.length)return;L.push(`${k}:`);l.forEach(([n,t])=>{L.push(`  - name: ${yq(n||"")}`,`    desc: ${yq(t||"")}`);});});
   if(d.role)L.push(`# ${String(d.role).replace(/\s+/g," ")}`);
   L.push("```");return L.join("\n");}
@@ -4764,7 +4796,7 @@ ${full(`<b>AC</b> ${d.ac}${d.acNote?` (${e(d.acNote)})`:""} &nbsp; <b>Initiative
 <tr>${["STR","DEX","CON","INT","WIS","CHA"].map(a=>`<td style="${cell};text-align:center;background:#f6efe1;color:${red}"><b>${a}</b></td>`).join("")}</tr>
 <tr>${d.stats.map((v,i)=>{const sv=saveOf(i);return `<td style="${cell};text-align:center">${v} (${fmt(md(v))})${sv!=null?`<br><span style="font-size:8.5pt">save ${fmt(sv)}</span>`:""}</td>`;}).join("")}</tr>
 ${lab("Skills",d.skills.map(([n,v])=>`${n} ${fmt(v)}`).join(", "))}${lab("Vulnerabilities",d.vul)}${lab("Resistances",d.res)}${lab("Immunities",[d.imm,d.ci].filter(Boolean).join("; "))}${lab("Gear",d.gear)}${lab("Possessions",d.carried||"")}${lab("Senses",d.senses)}${lab("Languages",d.languages)}${lab("Challenge",d.cr?`CR ${d.cr}`:"")}
-${sec("Traits",d.traits)}${sec("Actions",d.actions)}${sec("Bonus Actions",d.bonus)}${sec("Reactions",d.reactions)}${sec("Legendary Actions",d.legendary)}${sec("Magic Items",d.items||[])}
+${sec("Traits",d.traits)}${sec("Actions",d.actions)}${sec("Bonus Actions",d.bonus)}${sec("Reactions",d.reactions)}${sec("Legendary Actions",d.legendary&&d.legendary.length&&d.legIntro?[["",d.legIntro],...d.legendary]:d.legendary)}${sec("Magic Items",d.items||[])}
 </table><p></p>`;}
 let EXP=null;
 function openExport(kind,d){EXP={kind,d};const body=$("exp_body");$("exp_title").textContent=kind==="md"?`${d.name}: for Obsidian`:`${d.name}: for Word`;
