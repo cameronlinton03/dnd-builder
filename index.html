@@ -326,6 +326,7 @@ body.compact #m_menu{display:inline-block;flex:none}
 body.compact .rb-cur{flex:1;order:1}body.compact #m_menu{order:2}body.compact .rb-actions{order:3}
 body.compact .rbar .inner{flex-wrap:wrap}
 body.compact .rb-actions{display:none}
+body.compact .rgh .rb-actions,body.compact.mmenu .rgh .rb-actions{display:flex;width:auto;padding:0;gap:.35rem}body.compact.mmenu .rgh .rb-actions>*{width:auto}
 body.compact.mmenu .rb-actions{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;width:100%;padding:.3rem 0 .2rem}
 body.compact.mmenu .rb-actions>*{width:100%;margin:0}
 body.compact #dm_btn,body.compact #play_btn{display:none}
@@ -402,7 +403,9 @@ body.compact #dm_close{display:none}
     <div class="rfoot">
       <div><label for="r_newcamp">New campaign</label><div class="addc"><input type="text" id="r_newcamp" placeholder="e.g. The Sinofrian Plague"><button type="button" id="r_addcamp">Add campaign</button></div></div>
       <div><span class="lbl">Share a character</span><div class="addc"><button type="button" class="ghost" id="r_export">Share character file</button><button type="button" class="ghost" id="r_import_btn">Open a file</button><input type="file" id="r_import" accept=".json,application/json" hidden></div></div>
+      <div><span class="lbl">Back up or move campaigns</span><div class="addc"><button type="button" class="ghost" id="r_expall" title="One file with every campaign, character, NPC and creature in your roster">Export everything</button><button type="button" class="ghost" id="r_impros_btn" title="Add the campaigns from an exported file to this roster">Import campaigns</button><input type="file" id="r_impros" accept=".json,application/json" hidden></div></div>
     </div>
+    <p class="hint" id="r_localnote" hidden>This roster is saved in this browser, on this device only. Clearing the browser's site data erases it, so export a backup now and then. To move campaigns to another device or into the Claude version, export here and import there.</p>
   </div>
 </section>
 
@@ -4054,7 +4057,9 @@ function fmtDate(iso){try{return new Date(iso).toLocaleDateString(undefined,{mon
 
 async function initRoster(){
   renderRosterBar();
-  if(!window.claude){rosterOff("Your character is kept in this browser as you work. Use Share character sheet to send it to your DM or save a backup.");return;}
+  if(!window.claude){const ldb=localDB();
+    if(!ldb){rosterOff("Your character is kept in this browser as you work. Use Share character sheet to send it to your DM or save a backup.");return;}
+    RS.db=ldb;RS.local=true;RS.campCol=ldb.collection("campaigns");RS.charCol=ldb.collection("characters");RS.creCol=ldb.collection("creatures");rosterBind();if(!$("r_status").textContent)rsStatus(isPlayerView()?"Your characters are saved in this browser. Use Share character sheet to send one to your DM or keep a backup.":"Your roster is saved in this browser. Use Export everything under My characters to back it up or move it.");return;}
   let db=null,user=null;
   try{[db,user]=await Promise.all([window.claude.use("db"),window.claude.use("user")]);}catch(e){}
   const uid=user?await user.id():null;
@@ -4063,6 +4068,25 @@ async function initRoster(){
   RS.db=db;
   const base=db.doc(`data/users/${uid}/profile`);
   RS.campCol=base.collection("campaigns");RS.charCol=base.collection("characters");RS.creCol=base.collection("creatures");
+  rosterBind();
+}
+/* A roster kept in this browser, for when the page runs outside Claude (the GitHub site, or the file opened on its own).
+   It offers the few calls the roster uses: collection(name).doc(id?) with set / update / delete, and onSnapshot. */
+function localDB(){const KEY="ledger_roster",NAMES=["campaigns","characters","creatures"];let data={},subs={};
+  const load=()=>{let d=null;try{d=JSON.parse(localStorage.getItem(KEY)||"null");}catch(e){}d=obj(d);NAMES.forEach(n=>data[n]=obj(d[n]));};
+  try{localStorage.setItem("ledger_probe","1");localStorage.removeItem("ledger_probe");}catch(e){return null;}
+  load();
+  const copy=v=>JSON.parse(JSON.stringify(v));
+  const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){const er=new Error("This browser's storage is full");er.code="quota_exceeded";throw er;}};
+  const emit=n=>{const sn={docs:Object.entries(data[n]).map(([id,v])=>({id,data:()=>copy(v)}))};(subs[n]||[]).forEach(cb=>{try{cb(sn);}catch(e){console.error(e);}});};
+  const newId=()=>"l"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const write=(n,id,v)=>{const had=id in data[n],prev=data[n][id];if(v===undefined)delete data[n][id];else data[n][id]=v;
+    try{persist();}catch(e){if(had)data[n][id]=prev;else delete data[n][id];throw e;}emit(n);};
+  const collection=n=>({doc(id){id=id||newId();return {id,set:async v=>write(n,id,copy(v)),update:async v=>{if(!(id in data[n])){const er=new Error("not found");er.code="not_found";throw er;}write(n,id,{...data[n][id],...copy(v)});},delete:async()=>write(n,id,undefined)};},
+    onSnapshot(cb){(subs[n]=subs[n]||[]).push(cb);Promise.resolve().then(()=>emit(n));}});
+  window.addEventListener("storage",e=>{if(e.key===KEY||e.key===null){load();Object.keys(subs).forEach(emit);}});
+  return {local:true,collection};}
+function rosterBind(){
   RS.creCol.onSnapshot(sn=>{RS.cres=sn.docs.map(d=>({id:d.id,...d.data()}));RS.cresLoaded=true;if(typeof renderDM==="function")renderDM();},rosterErr);
   try{const last=localStorage.getItem("ledger_cur");if(last)RS.curId=last;}catch(e){}
   RS.campCol.onSnapshot(sn=>{RS.camps=sn.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.name||"").localeCompare(b.name||""));RS.campsLoaded=true;renderRoster();if(typeof renderDM==="function")renderDM();},rosterErr);
@@ -4075,7 +4099,7 @@ function rosterOff(msg){RS.off=msg;document.body.classList.add("offline");render
 function rosterErr(e){if(e&&e.code==="revoked"){RS.off="Your access to this page changed, so the roster is paused. Your current character is kept in this browser.";}else{RS.off="The roster couldn't load. Reload the page to try again. Your current character is kept in this browser.";}renderRoster();}
 function writeErr(e){
   if(e&&e.code==="invalid_argument"){RS.readOnly=true;rsStatus("Your access to this page doesn't include saving. Ask the owner to share it with you as a Contributor.");}
-  else if(e&&e.code==="quota_exceeded"){rsStatus("Your roster is full. Delete some characters or campaigns to save more.");}
+  else if(e&&e.code==="quota_exceeded"){rsStatus(RS.local?"This browser's storage is full. Export everything as a backup, then delete some characters or campaigns to save more.":"Your roster is full. Delete some characters or campaigns to save more.");}
   else if(e&&e.code==="resource_exhausted"){rsStatus("Saving too quickly. Your changes will save in a moment.");scheduleWrite();}
   else rsStatus("Couldn't save just now. Your changes are kept in this browser; they'll save on your next edit.");
 }
@@ -4103,7 +4127,7 @@ async function saveNew(copy){
   try{await ref.set({...b,updated:new Date().toISOString()});
     if(copy){S.name=b.name;$("name").value=S.name;}
     RS.curId=ref.id;RS.lastKey=keyOf(b);try{localStorage.setItem("ledger_cur",ref.id);}catch(e){}
-    rsStatus(copy?"Saved a copy. You're now editing the copy.":`Saved to your roster${S.campaign?` in ${esc(campName(S.campaign))}`:""}. Changes now save automatically.`);
+    rsStatus(copy?"Saved a copy. You're now editing the copy.":`Saved to your roster${S.campaign?` in ${esc(campName(S.campaign))}`:""}. Changes now save automatically.${RS.local?" The roster lives in this browser only: use Export everything under My characters to back it up.":""}`);
     renderRoster();schedulePreview();
   }catch(e){writeErr(e);}
 }
@@ -4168,7 +4192,7 @@ async function delCamp(id){
 function renderRosterBar(){
   $("cur_name").textContent=S.name||"Unnamed character";
   const saved=!!RS.curId,cn=campName(S.campaign);
-  $("cur_meta").textContent=RS.off?(isDirtyUnsaved()?"Kept in this browser. Changed since the last file save":"Kept in this browser"):saved?`${kindLabel(S.kind)}${cn?` in ${cn}`:""}. Saved to your roster`:`${kindLabel(S.kind)}. Not saved to your roster yet`;
+  $("cur_meta").textContent=RS.off?(isDirtyUnsaved()?"Kept in this browser. Changed since the last file save":"Kept in this browser"):saved?`${kindLabel(S.kind)}${cn?` in ${cn}`:""}. Saved to your roster${RS.local?" in this browser":""}`:`${kindLabel(S.kind)}. Not saved to your roster yet`;
   $("r_kind").value=S.kind||"pc";
   const campOpts=[["","No campaign"],...RS.camps.map(c=>[c.id,c.name]),["__new","New campaign…"]];
   $("r_camp").innerHTML=campOpts.map(([v,l])=>opt(v,l,(S.campaign||"")===v)).join("");
@@ -4181,7 +4205,7 @@ function renderRosterBar(){
 function renderRoster(){
   renderRosterBar();
   if(RS.off&&!$("r_status").textContent) rsStatus(esc(RS.off));
-  $("roster").hidden=!RS.open;
+  $("roster").hidden=!RS.open;$("r_localnote").hidden=!RS.local;
   if(!RS.open) return;
   const L=$("r_list");
   if(RS.off){L.innerHTML=`<p class="rempty">${esc(RS.off)}</p>`;return;}
@@ -4202,7 +4226,7 @@ function renderRoster(){
       :`<h3>${esc(g.name)}<span class="small">${pcs} PC${pcs===1?"":"s"}, ${npcs} NPC${npcs===1?"":"s"}</span></h3>`;
     const gacts=g.camp&&RS.rename!==g.id?(RS.confirm===`camp:${g.id}`
       ?`<span class="small">Delete this campaign? Its characters move to "No campaign".</span><button type="button" class="danger" data-delcamp="${g.id}">Delete campaign</button><button type="button" class="ghost" data-cancel="1">Keep it</button>`
-      :`<button type="button" class="ghost" data-rename="${g.id}">Rename</button><button type="button" class="ghost" data-askdelcamp="${g.id}">Delete</button>`):"";
+      :`<button type="button" class="ghost" data-expcamp="${g.id}" title="Save this campaign, with its characters, NPCs and creatures, as one file">Export</button><button type="button" class="ghost" data-rename="${g.id}">Rename</button><button type="button" class="ghost" data-askdelcamp="${g.id}">Delete</button>`):"";
     html+=`<div class="rgroup"><div class="rgh">${head}<div class="rb-actions">${gacts}</div></div>`;
     if(!members.length) html+=`<p class="rempty">No characters yet. Build one, pick this campaign at the top, and save it.</p>`;
     members.forEach(m=>{
@@ -4247,6 +4271,7 @@ $("roster").addEventListener("click",e=>{
   else if(d.rename){RS.rename=d.rename;renderRoster();const i=document.querySelector(`[data-renamein="${d.rename}"]`);if(i){i.focus();i.select();}}
   else if(d.renamesave){renameCamp(d.renamesave,document.querySelector(`[data-renamein="${d.renamesave}"]`).value);}
   else if(d.askdelcamp){RS.confirm=`camp:${d.askdelcamp}`;renderRoster();}
+  else if(d.expcamp){exportRoster(d.expcamp);}
   else if(d.delcamp){delCamp(d.delcamp);}
   else if(d.cancel){RS.confirm="";RS.rename="";renderRoster();}
 });
@@ -4270,7 +4295,7 @@ $("r_fileopen").addEventListener("click",askOpenFile);
 $("r_import_btn").addEventListener("click",askOpenFile);
 $("r_import").addEventListener("change",async e=>{
   const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d||d.format!=="character-ledger"||!d.state)throw new Error("format");
+  try{const d=JSON.parse(await f.text());if(d&&d.format===ROSTER_FMT){importRoster(d);return;}if(!d||d.format!=="character-ledger"||!d.state)throw new Error("format");
     clearTimeout(RS.timer);S=hydrate(d.state);S.campaign="";S.mode=S.kind||"pc";RS.curId=null;RS.lastKey="";try{localStorage.removeItem("ledger_cur");}catch(x){}
     syncStatic();renderAll();markPristine();RS.pristine="";
     rsStatus(RS.off?`Opened ${esc(S.name||"a character")} from the file.`:`Opened ${esc(S.name||"a character")} from the file. Press Save to roster to keep it.`);
@@ -4560,6 +4585,69 @@ $("idea_build").addEventListener("click",()=>{const d=ideaDetails(),keep={...IDE
 
 /* ---------- clear all saved data (DM mode only; several steps, nothing happens until the last one) ---------- */
 const WIPE={step:0};
+/* ----- whole campaigns in and out as a file ----- */
+const ROSTER_FMT="character-ledger-roster";
+function rosterPack(campId){const all=campId===undefined,known=new Set(RS.camps.map(c=>c.id)),home=x=>known.has(x.campaign)?x.campaign:"",inn=x=>all||home(x)===campId;
+  const camps=RS.camps.filter(c=>all||c.id===campId);
+  const out={format:ROSTER_FMT,version:1,exported:new Date().toISOString(),
+    campaigns:camps.map(c=>({id:c.id,name:c.name||"Campaign",created:c.created||"",tags:campTags(c.id)})),
+    characters:RS.chars.filter(inn).map(c=>({name:c.name||"Unnamed",kind:c.kind||"pc",campaign:home(c),summary:c.summary||"",state:c.id===RS.curId?JSON.parse(JSON.stringify(S)):c.state,updated:c.updated||""})),
+    creatures:(RS.cres||[]).filter(inn).map(c=>({name:c.name||"Creature",campaign:home(c),base:c.base||"",block:c.block||null,meta:c.meta||{},updated:c.updated||""}))};
+  if(all)out.noneTags=campTags("");return out;}
+async function exportRoster(campId){
+  if(!RS.db||RS.off||!RS.charsLoaded||!RS.campsLoaded){rsStatus("Your roster hasn't loaded yet.");return;}
+  const p=rosterPack(campId),n=p.characters.length+p.creatures.length;
+  if(!p.campaigns.length&&!n){rsStatus("There's nothing in your roster to export yet.");return;}
+  const nm=campId===undefined?"character-ledger-roster":(((p.campaigns[0]||{}).name||"campaign").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"campaign")+"-campaign";
+  const r=await offerFile(`${nm}.json`,JSON.stringify(p),$("r_status"));
+  if(r==="saved")rsStatus(`Saved ${esc(nm)}.json: ${p.campaigns.length} campaign${p.campaigns.length===1?"":"s"}, ${p.characters.length} character${p.characters.length===1?"":"s"} and ${p.creatures.length} creature${p.creatures.length===1?"":"s"}. Open it with Import campaigns in any copy of this builder.`);}
+async function importRoster(d){
+  if(!RS.db||RS.off||RS.readOnly){rsStatus("Campaigns can't be imported here because the roster isn't available.");return;}
+  if(!RS.charsLoaded||!RS.campsLoaded){rsStatus("Your roster is still loading. Try again in a moment.");return;}
+  const arr=v=>Array.isArray(v)?v:[],str=v=>typeof v==="string"?v:"",low=v=>str(v).trim().toLowerCase(),now=()=>new Date().toISOString();
+  const cnt={camps:0,merged:0,added:0,updated:0,kept:0};let curHit=null;
+  rsStatus("Importing…");
+  const mergeTags=(mine,theirs)=>{const tags=mine.map(t=>({...t})),map={};let changed=false;
+    arr(theirs).forEach(t=>{if(!t||!str(t.name).trim())return;const hit=tags.find(x=>low(x.name)===low(t.name));if(hit){map[t.id]=hit.id;return;}
+      let id=str(t.id)||newTagId();if(tags.some(x=>x.id===id))id=newTagId()+tags.length;map[t.id]=id;tags.push({id,name:str(t.name).trim().slice(0,60)});changed=true;});
+    return {tags,map,changed};};
+  const retag=(list,map)=>[...new Set(arr(list).map(t=>map[t]).filter(Boolean))];
+  try{
+    const campMap={"":""},tagMaps={};
+    for(const c of arr(d.campaigns)){if(!c||!str(c.name).trim())continue;const name=str(c.name).trim().slice(0,120),ex=RS.camps.find(x=>low(x.name)===low(name));
+      if(ex){const m=mergeTags(campTags(ex.id),c.tags);campMap[c.id]=ex.id;tagMaps[ex.id]=m.map;cnt.merged++;if(m.changed){ex.tags=m.tags;await RS.campCol.doc(ex.id).update({tags:m.tags});}}
+      else{const m=mergeTags([],arr(c.tags).length?c.tags:TAGS0()),ref=RS.campCol.doc();await ref.set({name,created:str(c.created)||now(),tags:m.tags});campMap[c.id]=ref.id;tagMaps[ref.id]=m.map;cnt.camps++;}}
+    if(Array.isArray(d.noneTags)){const m=mergeTags(campTags(""),d.noneTags);tagMaps[""]=m.map;if(m.changed){try{localStorage.setItem("ledger_tags_none",JSON.stringify(m.tags));}catch(e){}}}
+    else{const m={};campTags("").forEach(t=>m[t.id]=t.id);tagMaps[""]=m;}
+    const known=new Set(RS.camps.map(c=>c.id)),home=x=>known.has(x.campaign)?x.campaign:"";
+    const mine=RS.chars.map(c=>({id:c.id,key:`${home(c)}|${c.kind||"pc"}|${low(c.name)}`,updated:c.updated||"",used:false}));
+    for(const c of arr(d.characters)){if(!c||!c.state||typeof c.state!=="object"||Array.isArray(c.state))continue;
+      const camp=campMap[str(c.campaign)]||"",kind=c.kind==="npc"?"npc":"pc",name=str(c.name).trim().slice(0,200)||"Unnamed";
+      const st=JSON.parse(JSON.stringify(c.state));st.campaign=camp;st.kind=kind;if(st.npcMeta&&typeof st.npcMeta==="object")st.npcMeta.tags=retag(st.npcMeta.tags,tagMaps[camp]||{});
+      const body={name,kind,campaign:camp,summary:str(c.summary).slice(0,300),state:st,updated:str(c.updated)||now()};
+      const hit=mine.find(x=>!x.used&&x.key===`${camp}|${kind}|${low(name)}`);
+      if(hit){hit.used=true;if(body.updated>hit.updated){await RS.charCol.doc(hit.id).set(body);cnt.updated++;if(hit.id===RS.curId)curHit=body;}else cnt.kept++;}
+      else{await RS.charCol.doc().set(body);cnt.added++;}}
+    const myCre=(RS.cres||[]).map(c=>({id:c.id,key:`${home(c)}|${low(c.name)}`,updated:c.updated||"",used:false}));
+    for(const c of arr(d.creatures)){if(!c||!str(c.name).trim())continue;const camp=campMap[str(c.campaign)]||"",name=str(c.name).trim().slice(0,200);
+      const meta={...obj(c.meta)};meta.tags=retag(meta.tags,tagMaps[camp]||{});
+      const body={name,campaign:camp,base:str(c.base),block:c.block&&typeof c.block==="object"&&!Array.isArray(c.block)?c.block:null,meta,updated:str(c.updated)||now()};
+      const hit=myCre.find(x=>!x.used&&x.key===`${camp}|${low(name)}`);
+      if(hit){hit.used=true;if(body.updated>hit.updated){await RS.creCol.doc(hit.id).set(body);cnt.updated++;}else cnt.kept++;}
+      else{await RS.creCol.doc().set(body);cnt.added++;}}
+  }catch(e){writeErr(e);if(!$("r_status").textContent||$("r_status").textContent==="Importing…")rsStatus("The import stopped partway. What was added so far is in your roster; importing the same file again is safe.");return;}
+  if(curHit){const ch=RS.chars.find(c=>c.id===RS.curId);if(ch){Object.assign(ch,curHit);openChar(ch.id);}}
+  const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`,bits=[];
+  if(cnt.camps)bits.push(`${pl(cnt.camps,"new campaign")}`);if(cnt.merged)bits.push(`${pl(cnt.merged,"campaign")} you already had`);
+  bits.push(`${pl(cnt.added,"character or creature").replace("character or creatures","characters and creatures")} added`);if(cnt.updated)bits.push(`${cnt.updated} updated from the file`);if(cnt.kept)bits.push(`${cnt.kept} left alone because yours ${cnt.kept===1?"is":"are"} the same or newer`);
+  RS.open=true;renderRoster();if(typeof renderDM==="function")renderDM();rsStatus(`Import finished: ${bits.join(", ")}.`);}
+$("r_expall").addEventListener("click",()=>exportRoster());
+$("r_impros_btn").addEventListener("click",()=>$("r_impros").click());
+$("r_impros").addEventListener("change",async e=>{const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  let d=null;try{d=JSON.parse(await f.text());}catch(err){}
+  if(d&&d.format===ROSTER_FMT)importRoster(d);
+  else if(d&&d.format==="character-ledger")rsStatus("That's a single character file. Use Open a file to load it.");
+  else rsStatus("That file isn't a Character Ledger campaign export.");});
 function wipeCounts(){const on=!!RS.db&&!RS.off;return {on,chars:on?RS.chars.length:0,camps:on?RS.camps.length:0,cres:on?(RS.cres||[]).length:0};}
 function renderWipe(){const box=$("wipe"),n=wipeCounts(),e=esc;
   if(!WIPE.step){box.innerHTML=`<button type="button" class="ghost xs" data-wipe="start">Clear all saved data</button>`;return;}
