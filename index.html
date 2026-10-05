@@ -1087,7 +1087,7 @@ const WEAPONS={
 
 /* ================= STATE ================= */
 const $=id=>document.getElementById(id);
-const defaults=()=>({lang:{},npcMeta:{tags:[],status:"alive",att:"neutral",note:""},cls:"Fighter",level:1,sub:"",subOther:"",sp:"Human",spChoice:"",keen:"Perception",spSkills:[],spAb:"",humanFeat:"Tough",size:"Medium",asiFeat:[],inv:[],invX:[],
+const defaults=()=>({sp2:"",lang:{},npcMeta:{tags:[],status:"alive",att:"neutral",note:""},cls:"Fighter",level:1,sub:"",subOther:"",sp:"Human",spChoice:"",keen:"Perception",spSkills:[],spAb:"",humanFeat:"Tough",size:"Medium",asiFeat:[],inv:[],invX:[],
   bg:"Soldier",bgmode:"21",plus2:"",plus1:"",bgTool:"",method:"array",scores:{},asi:[],boon:"",
   classSkills:[],extraSkills:[],expertise:[],armor:"",shield:false,weapons:[],gear:"",gearTouched:false,
   name:"",player:"",align:"",notes:"",title:"",cr:"",pronoun:"they",appearance:"",personality:"",goals:"",secret:"",mode:"pc",opts:{},kind:"pc",campaign:"",spells:{pick:{},land:"Temperate"},track:{slots:{},pact:0,used:{},conc:"",log:"",hp:null,temp:0,ds:[0,0],hd:0,res:{},insp:false,cond:[],exh:0},items:[],money:{pp:0,gp:0,ep:0,sp:0,cp:0},mastery:[],hpRolls:{},tips:true,mc:[],mcSkills:{},dataV:2,
@@ -1346,6 +1346,11 @@ function roadmap(){ // level -> [features] with subclass resolved
   }
   return out;
 }
+/* Mixed heritage (half-orc, half-elf…). The 2024 rules have no half-species: the character uses one species' traits
+   and the other parent only shapes how they look, so this changes the name shown and nothing else. */
+const SP_FAMILIES=()=>[...new Set(Object.keys(SPECIES).map(k=>SPECIES[k].nm||k))].sort();
+function mixLabel(st){st=st||S;const a=st.sp==="Other"?((st.spc&&st.spc.name)||"Custom species"):((SPECIES[st.sp]||{}).nm||st.sp),b=st.sp2;
+  if(!b||typeof b!=="string"||b===a||!SP_FAMILIES().includes(b))return "";return a==="Human"?`Half-${b}`:b==="Human"?`Half-${a}`:`Half-${a}, Half-${b}`;}
 function species(){
   if(S.sp==="Other") return {custom:true,name:S.spc.name||"Custom species",size:S.spc.size,speed:+S.spc.speed||30,dark:+S.spc.dark||0,traits:S.spc.traits.split("\n").map(x=>x.trim()).filter(Boolean),levels:{},res:[],spells:null,skillPick:null,anySkills:0,featPick:false};
   const b=SPECIES[S.sp], o={name:S.sp,size:b.sizeChoice?S.size:b.size,speed:b.speed,dark:b.dark,traits:[...b.traits],levels:JSON.parse(JSON.stringify(b.levels||{})),res:Array.isArray(b.res)?[...b.res]:b.res?[b.res]:[],spells:null,skillPick:b.skillPick||null,anySkills:b.anySkills||0,featPick:!!b.featPick,hpPerLevel:b.hpPerLevel||0};
@@ -1750,6 +1755,8 @@ function renderSpecies(){
   if(hasSpSpells){const m={};const sn=scoresAt(S.level);AB.forEach(a=>m[a]=mod(sn[a]));const best=bestMental(m);
     h+=`<label for="spab">Spellcasting ability for species spells</label><select id="spab" data-k="spAb">${opt("",`Highest of the three (now ${AF[best]})`,!S.spAb)}${["int","wis","cha"].map(a=>opt(a,AF[a],S.spAb===a)).join("")}</select>`;}
   if(sp.src&&b&&b.choice&&/level 3/.test(b.choice.label)&&S.level<3) h+=`<p class="hint">This takes effect at level 3, but you can decide now.</p>`;
+  {const fam=S.sp==="Other"?"":((SPECIES[S.sp]||{}).nm||S.sp),mx=mixLabel();
+    h+=`<label for="sp2">Mixed heritage <span class="small">(optional)</span></label><select id="sp2" data-k="sp2">${opt("","None",!S.sp2)}${SP_FAMILIES().filter(k=>k!==fam).map(k=>opt(k,k,S.sp2===k)).join("")}</select><p class="hint">${mx?`Shown as <b>${esc(mx)}</b> on the sheet. `:"For a half-orc, half-elf and the like. "}The 2024 rules have no separate half-species: the character uses the traits of the species chosen above, and the other parent shapes how they look.</p>`;}
   $("sp_opts").innerHTML=h;
   $("sp_facts").innerHTML=custom?"Enter what your book lists. Size, speed and darkvision go straight onto the sheet.":
    `${sp.src?`${esc(sp.ctype)} · `:""}${esc(sp.size)} · speed <b>${sp.speed} ft</b>${[sp.fly?"fly":"",sp.swim?"swim":"",sp.climb?"climb":""].filter(Boolean).map(x=>` · ${x} <b>${sp.speed} ft</b>`).join("")}${sp.dark?` · darkvision <b>${sp.dark} ft</b>`:""}${sp.res.length?` · resists <b>${sp.res.join(", ").toLowerCase()}</b>`:""}${sp.src==="motm"?`<br><span class="small">Mordenkainen's version: no ability increases here (your background gives them, as in the 2024 rules).</span>`:""}<ul>${sp.traits.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`;
@@ -2420,7 +2427,7 @@ function sheetHTML(mode,forPreview,live){
   if(live===undefined)live=forPreview;live=live&&mode==="pc";
   const s0=snapshot(),s=mode==="pc"?playAdjust(s0):s0,e=esc;
   const clsLine=s.multi?classLineText():`${s.cls} ${s.level}${s.sub?` (${s.sub})`:""}`;
-  const idLine=[s.sp.name,clsLine,`${s.b.name} background`,S.align].filter(Boolean).map(e).join(" · ");
+  const idLine=[mixLabel()||s.sp.name,clsLine,`${s.b.name} background`,S.align].filter(Boolean).map(e).join(" · ");
   const abil=`<div class="abil">${AB.map(a=>{const sv=s.saves.find(x=>x.a===a);return `<div class="ab"><div class="n">${AF[a]}</div><div class="m">${fmt(s.mods[a])}</div><div class="s">${s.scores[a]}</div>${mode==="pc"?`<div class="sv"><span class="dot${sv.prof?" on":""}"></span>Save ${fmt(sv.bonus)}</div>`:""}</div>`;}).join("")}</div>`;
   const atkRows=s.attacks.map(a=>`<tr><td>${e(a.name)}${a.prof===false?' <span class="muted">(not proficient)</span>':""}</td><td class="num">${fmt(a.hit)}</td><td>${e(a.dmg)} ${e(a.type)}${a.vers?`<br><span class="muted">${e(a.vers)} two-handed</span>`:""}</td><td class="muted">${e(a.props.join(", "))}${mode==="pc"&&s.c.mastery&&a.mastery?`${a.props.length?"; ":""}mastery: ${e(a.mastery)}`:""}</td></tr>`).join("");
   const spellLines=[];
@@ -2478,7 +2485,7 @@ ${spellLines.length||res?`<h2>Class resources${spellLines.length?" and magic":""
 </div></div>
 ${spellSheetPC(s,live)}
 <h2>Class features</h2><ul>${featsByLevel}</ul>
-<h2>Species traits (${e(s.sp.name)})</h2><ul>${spTraits}</ul>
+<h2>Species traits (${e(mixLabel()?`${mixLabel()}, using ${s.sp.name} traits`:s.sp.name)})</h2><ul>${spTraits}</ul>
 <h2>${s.invs.length?"Feats and invocations":"Feats"}</h2><ul>${featList}</ul><p class="muted" style="margin:.3rem 0 0">Carrying capacity ${carryOf(s)} lb; push, drag or lift ${carryOf(s)*2} lb.</p>
 ${inventorySheetHTML(s,live)}
 ${S.gear?`<h2>${(S.items||[]).length?"Other gear":"Equipment"}</h2><p class="pre">${e(S.gear)}</p>`:""}
@@ -2772,7 +2779,7 @@ function attackLine(a,first){
 const capS=t=>String(t).replace(/(^|[.!?)>]\s*)(the character)/g,(m,a,b)=>a+"The character");
 function npcHTML(){
   const s=npcModel(),e=esc,o=s.out,first=s.first,L=s.level;
-  const typeTag=s.sp.src?[s.sp.tag,s.sp.sub].filter(Boolean).join(", "):(s.sp.custom?s.sp.name:s.sp.name.replace(/^Dragonborn \(.*\)$/,"Dragonborn").replace(/^(Goliath|Tiefling) \(.*\)$/,"$1"));
+  const typeTag=mixLabel()?mixLabel():s.sp.src?[s.sp.tag,s.sp.sub].filter(Boolean).join(", "):(s.sp.custom?s.sp.name:s.sp.name.replace(/^Dragonborn \(.*\)$/,"Dragonborn").replace(/^(Goliath|Tiefling) \(.*\)$/,"$1"));
   const size=/Medium or Small/.test(s.sp.size)?"Medium":s.sp.size;
   const creature=`${size} ${e(s.sp.ctype||"Humanoid")} (${e(typeTag)})${S.align?`, ${e(S.align)}`:""}`;
   const conTotal=s.hp-s.hd.reduce((a,x)=>a+avgOf(`${x.n}d${x.die}`),0);
@@ -3621,7 +3628,7 @@ function qbLangs(){const R=a=>a[Math.floor(Math.random()*a.length)];S.lang={};
 function qbSummary(){const s=snapshot(),e=esc,sk=skillSets(),plan=spellPlan(),known=knownSpells(plan);
   const opts=optDefs().filter(d=>S.level>=d.lvl&&(!d.sub||S.sub===d.sub)).map(d=>`${d.label}: ${getOpt(d.k)}`);
   const asi=asiSlots(S.level).map((l,i)=>{const p=S.asi[i]||[];return p[0]===""?`Lv ${l}: feat`:`Lv ${l}: +1 ${A3[p[0]]}, +1 ${A3[p[1]||p[0]]}`;});
-  const rows=[["Character",`${e(S.name||"Unnamed")}: level ${S.level} ${e(s.sp.name)} ${e(className())}${S.sub?` (${e(subName())})`:""}, ${e(s.b.name)} background`],
+  const rows=[["Character",`${e(S.name||"Unnamed")}: level ${S.level} ${e(mixLabel()||s.sp.name)} ${e(className())}${S.sub?` (${e(subName())})`:""}, ${e(s.b.name)} background`],
    ["Ability scores",AB.map(a=>`${A3[a]} ${s.scores[a]}`).join(", ")],["Numbers",`AC ${s.ac}, HP ${s.hp}, initiative ${fmt(s.init)}, speed ${s.speed} ft`],
    opts.length?["Class choices",e(opts.join("; "))]:null,asi.length?["Ability Score Improvements",asi.join("; ")]:null,
    ["Languages",e(s.langs.join(", "))],
@@ -3669,7 +3676,7 @@ function dmModel(ch){return withState(ch.state,()=>{const s=playAdjust(snapshot(
   const st=slotState(),rs=playResources(s).map(r=>({name:r.name,left:r.max-Math.min(resUsed(r.key),r.max),max:r.max}));
   const hd=s.multi?s.hd.map(x=>({die:x.die,left:x.n-Math.min((t.hdd||{})[x.die]||0,x.n),n:x.n})):[{die:+String(s.die).slice(1),left:s.level-Math.min(t.hd||0,s.level),n:s.level}];
   return {id:ch.id,cur:!!ch.cur,kind:S.kind||"pc",name:S.name||"Unnamed",player:S.player||"",line:s.multi?classLineText():`${className()} ${s.level}${S.sub?` (${subName()})`:""}`,
-    species:s.sp.name,TL:s.TL,ac:s.ac,hp:cur,max:s.hp,temp:t.temp||0,ds:t.ds||[0,0],speed:s.speed,init:s.init,
+    species:mixLabel()||s.sp.name,TL:s.TL,ac:s.ac,hp:cur,max:s.hp,temp:t.temp||0,ds:t.ds||[0,0],speed:s.speed,init:s.init,
     pp:10+sk("Perception"),pi:10+sk("Insight"),pv:10+sk("Investigation"),saves:s.saves,
     dark:s.sp.dark||0,senses:[s.blind?`Blindsight ${s.blind} ft`:"",...s.moreSenses].filter(Boolean),langs:s.langs,res:s.res,
     casters:s.multi?s.casters:(s.caster.cast?[{cls:className(),dc:s.dc,atk:s.atk}]:[]),
@@ -3833,7 +3840,7 @@ const newTagId=()=>"t"+Date.now().toString(36)+Math.random().toString(36).slice(
 function creBlock(c){const b=c.base&&MON_BY[c.base]?{...MON_BY[c.base]}:{...(c.block||{})};b.n=c.name||b.n||"Creature";return b;}
 function castEntries(camp){const out=[];
   RS.chars.filter(c=>(c.kind||"pc")==="npc"&&(c.campaign||"")===camp).forEach(c=>{const st=c.id===RS.curId?S:c.state||{};
-    try{const m=withState(st,()=>({ac:snapshot().ac,hp:snapshot().hp,cr:S.cr||estimateCR().cr,line:mcActive()?classLineText():`${className()} ${S.level}`,sp:species().name,meta:{...NPCMETA0(),...(S.npcMeta||{})}}));
+    try{const m=withState(st,()=>({ac:snapshot().ac,hp:snapshot().hp,cr:S.cr||estimateCR().cr,line:mcActive()?classLineText():`${className()} ${S.level}`,sp:mixLabel()||species().name,meta:{...NPCMETA0(),...(S.npcMeta||{})}}));
       out.push({src:"npc",id:c.id,name:c.name||"Unnamed",sub:`${m.sp} ${m.line}`,ac:m.ac,hp:m.hp,cr:m.cr,meta:m.meta});}catch(e){}});
   (RS.cres||[]).filter(c=>(c.campaign||"")===camp).forEach(c=>{const b=creBlock(c);
     out.push({src:"cre",id:c.id,name:c.name||b.n,sub:`${c.base&&c.base!==c.name?c.base+" · ":""}${b.sz||""} ${b.t||"creature"}`.trim(),ac:b.ac,hp:b.hp,cr:b.cr||"–",meta:{...NPCMETA0(),...(c.meta||{})}});});
@@ -4066,7 +4073,7 @@ $("play_btn").addEventListener("click",()=>{setPlay(!document.body.classList.con
 const RS={db:null,camps:[],chars:[],cres:[],campsLoaded:false,charsLoaded:false,curId:null,lastKey:"",timer:null,queue:Promise.resolve(),
   open:false,filter:"all",q:"",confirm:"",rename:"",pristine:"",off:"",readOnly:false};
 const kindLabel=k=>k==="npc"?"NPC":"Player character";
-function charSummary(st){const c=st.cls==="Other"?((st.cc&&st.cc.name)||"Custom class"):st.cls;const sp=st.sp==="Other"?((st.spc&&st.spc.name)||"Custom species"):st.sp;const mc=(st.mc||[]).filter(m=>m&&m.cls&&m.cls!==st.cls&&m.level>0);if(mc.length)return `Level ${st.level+mc.reduce((a,m)=>a+m.level,0)} ${sp} ${c} ${st.level} / ${mc.map(m=>`${m.cls} ${m.level}`).join(" / ")}`;return `Level ${st.level} ${sp} ${c}`;}
+function charSummary(st){const c=st.cls==="Other"?((st.cc&&st.cc.name)||"Custom class"):st.cls;const sp=mixLabel(st)||(st.sp==="Other"?((st.spc&&st.spc.name)||"Custom species"):st.sp);const mc=(st.mc||[]).filter(m=>m&&m.cls&&m.cls!==st.cls&&m.level>0);if(mc.length)return `Level ${st.level+mc.reduce((a,m)=>a+m.level,0)} ${sp} ${c} ${st.level} / ${mc.map(m=>`${m.cls} ${m.level}`).join(" / ")}`;return `Level ${st.level} ${sp} ${c}`;}
 function campName(id){const c=RS.camps.find(x=>x.id===id);return c?c.name:"";}
 function bodyNow(){const st=JSON.parse(JSON.stringify(S));return {name:S.name||"Unnamed",kind:S.kind||"pc",campaign:S.campaign||"",summary:charSummary(S),state:st};}
 const keyOf=b=>JSON.stringify(b);
