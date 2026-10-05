@@ -3110,6 +3110,7 @@ function renderSpells(){
     const openG=SPV.open[g.key]??(left==null?picked.length===0:left>0);
     h+=`<details class="pick" data-pg="${g.key}"${openG?" open":""}><summary><span class="subhead" style="display:inline-flex;margin:0;gap:.6rem"><span>${esc(g.label)}${g.n!=null?`: choose ${g.n}`:""}</span><span class="count${left?"":" done"}">${left==null?`${picked.length} chosen`:left>0?`${left} left`:left<0?`${-left} too many`:"Done"}</span></span></summary>`;
     h+=`<p class="hint">${esc(g.hint||"")}${picked.length?`. Chosen: ${picked.map(esc).join(", ")}`:""}</p>`;
+    if(g.n!=null&&left!=null&&left<=0&&g.from.length>picked.length) h+=`<p class="hint" data-fullnote="1"><b>All ${g.n} chosen.</b> The rest are greyed out until you untick one to swap it for something else.</p>`;
     if(g.abPick) h+=`<label for="miab_${g.abPick}">Magic Initiate spellcasting ability (for both of its groups)</label><select id="miab_${g.abPick}" data-miab="${g.abPick}">${["int","wis","cha"].map(a=>opt(a,AF[a],g.ab===a)).join("")}</select>`;
     if(!g.from.length&&/^(mast|sig)/.test(bk(g.key))) h+=`<p class="hint"><b>Nothing to pick yet:</b> add a level ${bk(g.key)==="mast1"?1:bk(g.key)==="mast2"?2:3} spell${bk(g.key).startsWith("mast")?" that takes an action":""} to your spellbook first.</p>`;
     const levels=[...new Set(g.from.map(x=>x.l))].sort((a,b)=>a-b);
