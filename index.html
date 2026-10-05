@@ -4692,7 +4692,8 @@ function sbFromNPC(st){return withState(st,()=>{const s=snapshot(),doc=new DOMPa
   return {name:S.name||"Unnamed",size:m[1]||"Medium",type:(m[2]||"Humanoid").trim(),subtype:m[3]||"",alignment:m[4]||S.align||"",ac:s.ac,acNote:s.acNote||"",init:s.init,hp:s.hp,hitDice:hpm[2]||"",
     speed:lineOf("Speed"),stats:AB.map(a=>s.scores[a]),saves:s.saves.filter(x=>x.prof).map(x=>[AB_FULL[AB.indexOf(x.a)],x.bonus]),skills:s.skills.filter(x=>x.prof).map(x=>[x.name,x.bonus]),
     vul:"",res:lineOf("Resistances"),imm:"",ci:lineOf("Condition Immunities"),gear:lineOf("Gear"),senses:lineOf("Senses"),languages:lineOf("Languages"),cr:S.cr||est.cr,
-    traits:secs["Traits"]||[],actions:secs["Actions"]||[],bonus:secs["Bonus Actions"]||[],reactions:secs["Reactions"]||[],legendary:[],items:secs["Magic Items"]||[],role:S.title||""};});}
+    traits:secs["Traits"]||[],actions:secs["Actions"]||[],bonus:secs["Bonus Actions"]||[],reactions:secs["Reactions"]||[],legendary:[],items:secs["Magic Items"]||[],role:S.title||"",
+    carried:[String(S.gear||"").split(/\n+/).map(x=>x.trim().replace(/[.;,]+$/,"")).filter(Boolean).join("; "),["pp","gp","ep","sp","cp"].filter(k=>+(S.money||{})[k]).map(k=>`${(+S.money[k]).toLocaleString()} ${k}`).join(", ")].filter(Boolean).join("; ")};});}
 function sbFromBlock(b){const md=v=>Math.floor((v-10)/2),ab=b.ab||[10,10,10,10,10,10];
   const pairs=str=>(str||"").split(/,\s*/).map(x=>{const m=/^(.*?)\s*([+−-]\d+)$/.exec(x.trim());return m?[m[1],+m[2].replace("−","-")]:null;}).filter(Boolean);
   const fullAb=a=>AB_FULL.find(f=>f.startsWith(a.toLowerCase().slice(0,3)))||a.toLowerCase();
@@ -4708,7 +4709,7 @@ function toFantasyStatblock(d){const L=["```statblock","layout: Basic 5e Layout"
   if(d.skills.length){L.push("skillsaves:");d.skills.forEach(([a,v])=>L.push(`  - ${yq(a.toLowerCase())}: ${v}`));}
   [["damage_vulnerabilities",d.vul],["damage_resistances",d.res],["damage_immunities",d.imm],["condition_immunities",d.ci],["senses",d.senses],["languages",d.languages]].forEach(([k,v])=>{if(v)L.push(`${k}: ${yq(v)}`);});
   L.push(`cr: ${yq(d.cr)}`);
-  const tr=[...(d.traits||[])];if(d.gear)tr.push(["Gear",d.gear]);(d.items||[]).forEach(([n,t])=>tr.push([`Magic Item: ${n}`,t]));
+  const tr=[...(d.traits||[])];if(d.gear)tr.push(["Gear",d.gear]);if(d.carried)tr.push(["Possessions",d.carried]);(d.items||[]).forEach(([n,t])=>tr.push([`Magic Item: ${n}`,t]));
   [["traits",tr],["actions",d.actions],["bonus_actions",d.bonus],["reactions",d.reactions],["legendary_actions",d.legendary]].forEach(([k,l])=>{if(!l||!l.length)return;L.push(`${k}:`);l.forEach(([n,t])=>{L.push(`  - name: ${yq(n||"")}`,`    desc: ${yq(t||"")}`);});});
   if(d.role)L.push(`# ${String(d.role).replace(/\s+/g," ")}`);
   L.push("```");return L.join("\n");}
@@ -4721,7 +4722,7 @@ function toWordHTML(d){const e=esc,red="#7a2e1d",bd=`border:1pt solid #c9b99a`,c
 ${full(`<b>AC</b> ${d.ac}${d.acNote?` (${e(d.acNote)})`:""} &nbsp; <b>Initiative</b> ${fmt(d.init)} (${10+d.init}) &nbsp; <b>HP</b> ${d.hp}${d.hitDice?` (${e(d.hitDice)})`:""}${d.speed?` &nbsp; <b>Speed</b> ${e(d.speed)}`:""}`)}
 <tr>${["STR","DEX","CON","INT","WIS","CHA"].map(a=>`<td style="${cell};text-align:center;background:#f6efe1;color:${red}"><b>${a}</b></td>`).join("")}</tr>
 <tr>${d.stats.map((v,i)=>{const sv=saveOf(i);return `<td style="${cell};text-align:center">${v} (${fmt(md(v))})${sv!=null?`<br><span style="font-size:8.5pt">save ${fmt(sv)}</span>`:""}</td>`;}).join("")}</tr>
-${lab("Skills",d.skills.map(([n,v])=>`${n} ${fmt(v)}`).join(", "))}${lab("Vulnerabilities",d.vul)}${lab("Resistances",d.res)}${lab("Immunities",[d.imm,d.ci].filter(Boolean).join("; "))}${lab("Gear",d.gear)}${lab("Senses",d.senses)}${lab("Languages",d.languages)}${lab("Challenge",d.cr?`CR ${d.cr}`:"")}
+${lab("Skills",d.skills.map(([n,v])=>`${n} ${fmt(v)}`).join(", "))}${lab("Vulnerabilities",d.vul)}${lab("Resistances",d.res)}${lab("Immunities",[d.imm,d.ci].filter(Boolean).join("; "))}${lab("Gear",d.gear)}${lab("Possessions",d.carried||"")}${lab("Senses",d.senses)}${lab("Languages",d.languages)}${lab("Challenge",d.cr?`CR ${d.cr}`:"")}
 ${sec("Traits",d.traits)}${sec("Actions",d.actions)}${sec("Bonus Actions",d.bonus)}${sec("Reactions",d.reactions)}${sec("Legendary Actions",d.legendary)}${sec("Magic Items",d.items||[])}
 </table><p></p>`;}
 let EXP=null;
