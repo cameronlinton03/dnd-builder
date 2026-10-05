@@ -2258,6 +2258,16 @@ function inventorySheetHTML(s,live){const items=S.items||[],mo=S.money||{};const
 // plain-language notes on the PC sheet, using this character's own numbers
 const plus=n=>n>=0?`+ ${n}`:`− ${Math.abs(n)}`;
 function attacksPerAction(s){return attackCount(s,true);}
+// which ability each group of this character's spells runs on, with the numbers it produces
+function spellAbGroups(s){const out=[],classAbs=new Set();
+  if(s.multi&&s.casters&&s.casters.length)s.casters.forEach(k=>{out.push({label:k.cls,cls:true,ab:k.cast,dc:k.dc,atk:k.atk});classAbs.add(k.cast);});
+  else if(s.caster&&s.caster.cast){out.push({label:s.cls||"Class",cls:true,ab:s.caster.cast,dc:s.dc,atk:s.atk});classAbs.add(s.caster.cast);}
+  let kn=[];try{kn=knownSpells();}catch(e){}
+  const by={};kn.forEach(k=>{if(!k.ab||!k.src||CLASSES[k.src]||classAbs.has(k.ab))return;(by[k.ab]=by[k.ab]||[]).includes(k.src)||by[k.ab].push(k.src);});
+  ["int","wis","cha","str","dex","con"].forEach(ab=>{if(by[ab])out.push({label:by[ab].join(", "),cls:false,ab,dc:8+s.pb+s.mods[ab],atk:s.pb+s.mods[ab]+(s.itemSpellAtk||0)-(s.exhPen||0)});});
+  return out;}
+function spellAbTip(s,g,only){const m=s.mods[g.ab],A=AF[g.ab],xd=g.dc-(8+s.pb+m),xa=g.atk-(s.pb+m),ex=v=>v?` ${plus(v)} from other bonuses or penalties`:"";
+  return `<p><b>${only?"Your spells run":`${esc(g.label)} spells run`} on ${A}</b> (your ${A} modifier is ${fmt(m)}). It feeds both spell numbers: spell save DC ${g.dc} = 8 + ${s.pb} proficiency ${plus(m)} ${A}${ex(xd)}, and spell attack ${fmt(g.atk)} = ${s.pb} proficiency ${plus(m)} ${A}${ex(xa)}. Raising ${A} makes ${only?"your":"these"} spells harder to resist and more accurate, and some spells add the modifier to their healing or damage.</p>`;}
 function tipsHTML(s,where){if(S.tips===false)return "";const e=esc,m=s.mods;let t="";
   if(where==="vitals") t=`<p><b>Armor Class ${s.ac}</b>: how hard you are to hit. An attacker's roll has to reach ${s.ac} to hit you.</p>
 <p><b>Hit Points ${s.hp}</b>: damage comes off this. At 0 you fall unconscious and start making death saving throws. A long rest restores them all.</p>
@@ -2273,8 +2283,10 @@ ${s.multi?`<p><b>Hit Dice ${hdText()}</b>: during a short rest you can spend som
 ${n>1?`<p><b>Extra Attack</b>: when you take the Attack action, you make ${["","one","two","three","four"][n]} attacks instead of one.</p>`:""}`;}
   if(where==="skills"){const sk=k=>s.skills.find(x=>x.name===k).bonus;t=`<p>When the DM asks for a check, like Stealth to sneak or Perception to spot something, roll a d20 and add that skill's number (Stealth: d20 ${plus(sk("Stealth"))}). The DM tells you whether the total succeeds.</p>
 <p><b>Passive Perception ${s.passive}</b>: the DM uses this to see whether you notice hidden things when you aren't actively searching.</p>`;}
-  const k0=s.caster.cast?{dc:s.dc,atk:s.atk}:(s.multi&&s.casters&&s.casters[0]);
-  if(where==="spells"&&k0) t=`<p><b>Spell save DC ${k0.dc}</b>: when one of your spells forces a saving throw, the target rolls a d20 plus its save and needs ${k0.dc} or more to resist.</p>
+  const sg=where==="spells"?spellAbGroups(s):[],k0=s.caster.cast?{dc:s.dc,atk:s.atk}:(s.multi&&s.casters&&s.casters[0]);
+  if(where==="spells"&&!k0&&sg.length) t=`${sg.map(g=>spellAbTip(s,g,sg.length===1)).join("")}<p><b>Spell save DC ${sg[0].dc}</b>: when one of your spells forces a saving throw, the target rolls a d20 plus its save and needs ${sg.length>1?"that spell's DC":sg[0].dc} or more to resist.</p>
+<p><b>Spell attack ${fmt(sg[0].atk)}</b>: for spells that make an attack roll, roll a d20 ${plus(sg[0].atk)} against the target's Armor Class, just like a weapon.</p>`;
+  if(where==="spells"&&k0) t=`${sg.map(g=>spellAbTip(s,g,sg.length===1)).join("")}<p><b>Spell save DC ${k0.dc}</b>: when one of your spells forces a saving throw, the target rolls a d20 plus its save and needs ${k0.dc} or more to resist.</p>
 <p><b>Spell attack ${fmt(k0.atk)}</b>: for spells that make an attack roll, roll a d20 ${plus(k0.atk)} against the target's Armor Class, just like a weapon.</p>
 <p><b>Spell slots</b>: cantrips are free. Casting a level 1 or higher spell uses a slot of that level or higher; a higher slot often makes the spell stronger. Slots come back after a ${s.multi?(s.slots.pact&&!s.slots.slots.length?"short or long rest":s.slots.pact?"long rest (Pact Magic slots also after a short rest)":"long rest"):s.caster.type==="pact"?"short or long rest":"long rest"}.</p>${s.multi&&s.casters.length>1?`<p><b>Several spellcasting classes</b>: each class has its own DC and attack (listed above), and prepares spells as if it were your only class. Your spell slots are pooled, so any slot can cast a spell from any of your classes.</p>`:""}`;
   return t?`<div class="tip">${t}</div>`:"";}
@@ -2412,7 +2424,7 @@ function sheetHTML(mode,forPreview,live){
   const abil=`<div class="abil">${AB.map(a=>{const sv=s.saves.find(x=>x.a===a);return `<div class="ab"><div class="n">${AF[a]}</div><div class="m">${fmt(s.mods[a])}</div><div class="s">${s.scores[a]}</div>${mode==="pc"?`<div class="sv"><span class="dot${sv.prof?" on":""}"></span>Save ${fmt(sv.bonus)}</div>`:""}</div>`;}).join("")}</div>`;
   const atkRows=s.attacks.map(a=>`<tr><td>${e(a.name)}${a.prof===false?' <span class="muted">(not proficient)</span>':""}</td><td class="num">${fmt(a.hit)}</td><td>${e(a.dmg)} ${e(a.type)}${a.vers?`<br><span class="muted">${e(a.vers)} two-handed</span>`:""}</td><td class="muted">${e(a.props.join(", "))}${mode==="pc"&&s.c.mastery&&a.mastery?`${a.props.length?"; ":""}mastery: ${e(a.mastery)}`:""}</td></tr>`).join("");
   const spellLines=[];
-  if(s.caster.cast) spellLines.push(`<dt>Spell save DC</dt><dd>${s.dc}</dd><dt>Spell attack</dt><dd>${fmt(s.atk)} (${AF[s.caster.cast]})</dd>`);
+  if(s.caster.cast) spellLines.push(`<dt>Spell save DC</dt><dd>${s.dc} (${AF[s.caster.cast]})</dd><dt>Spell attack</dt><dd>${fmt(s.atk)} (${AF[s.caster.cast]})</dd>`);
   if(s.multi){spellLines.length=0;s.casters.forEach(k=>spellLines.push(`<dt>${e(k.cls)} spells</dt><dd>save DC ${k.dc}, attack ${fmt(k.atk)} (${AF[k.cast]})${k.type==="third"?`; ${thirdCantrips(k.level)+(k.cls==="Rogue"?1:0)} Wizard cantrips, ${THIRD_PREP[k.level-3]} prepared Wizard spells`:""}</dd>`));}
   const st=slotsAllText(s.slots); if(st) spellLines.push(`<dt>Spell slots</dt><dd>${e(st)}</dd>`);
   if(s.multi&&s.slots.casterLevel) spellLines.push(`<dt>Combined caster level</dt><dd>${s.slots.casterLevel} (full-caster levels, plus half of Paladin and Ranger rounded up, plus a third of Eldritch Knight and Arcane Trickster rounded down)</dd>`);
@@ -3131,12 +3143,14 @@ document.addEventListener("change",e=>{const t=e.target;if(!t.closest||!t.closes
 document.addEventListener("input",e=>{const t=e.target;if(!t.dataset||!t.dataset.sq)return;SPV.open["q:"+t.dataset.sq]=t.value;const pos=t.selectionStart;renderSpells();const el=document.querySelector(`[data-sq="${t.dataset.sq}"]`);if(el){el.focus();try{el.setSelectionRange(pos,pos);}catch(x){}}},true);
 
 /* ---------- sheet sections ---------- */
+function spellOtherAbs(s){const g=spellAbGroups(s).filter(x=>!x.cls);return g.length?`<p style="margin:0 0 6px">${g.map(x=>`<b>${esc(x.label)}</b>: ${AF[x.ab]}, spell save DC <b>${x.dc}</b>, spell attack <b>${fmt(x.atk)}</b>`).join("<br>")}</p>`:"";}
 function spellSheetPC(s,live){
   const plan=spellPlan();if(!plan.any)return "";
   const known=knownSpells(plan),st=slotState();
   let h=`<h2>Spells</h2>`;
-  if(s.multi&&s.casters.length) h+=`<p style="margin:0 0 6px">${s.casters.map(k=>`<b>${esc(k.cls)}</b>: ${AF[k.cast]}, spell save DC <b>${k.dc}</b>, spell attack <b>${fmt(k.atk)}</b>`).join("<br>")}</p>${tipsHTML(s,"spells")}`;
-  else if(plan.classAb) h+=`<p style="margin:0 0 6px">Spellcasting ability <b>${AF[plan.classAb]}</b>, spell save DC <b>${s.dc}</b>, spell attack <b>${fmt(s.atk)}</b>.</p>${tipsHTML(s,"spells")}`;
+  if(s.multi&&s.casters.length) h+=`<p style="margin:0 0 6px">${s.casters.map(k=>`<b>${esc(k.cls)}</b>: ${AF[k.cast]}, spell save DC <b>${k.dc}</b>, spell attack <b>${fmt(k.atk)}</b>`).join("<br>")}</p>${spellOtherAbs(s)}${tipsHTML(s,"spells")}`;
+  else if(plan.classAb) h+=`<p style="margin:0 0 6px">Spellcasting ability <b>${AF[plan.classAb]}</b>, spell save DC <b>${s.dc}</b>, spell attack <b>${fmt(s.atk)}</b>.</p>${spellOtherAbs(s)}${tipsHTML(s,"spells")}`;
+  else{const og=spellOtherAbs(s);if(og)h+=og+tipsHTML(s,"spells");}
   if(st.levels.length) h+=`<div class="sslots">${st.levels.map(r=>`<span><b>${r.pact?`Pact (lv ${r.lvl})`:ord(r.lvl)}</b> ${boxes(r.max,r.used,live?"slot":"",` data-l="${r.lvl}"${r.pact?' data-pact="1"':""}`)}</span>`).join("")}</div><p class="muted" style="margin:3px 0 6px;font-size:10.5px">${live?"Tap a box to mark a slot used (tap again to restore). ":""}Filled boxes are used slots${st.mixed?". Pact slots come back on a short or long rest; the others on a long rest. Either kind can cast spells from any of your classes":st.pact?"; they come back on a short or long rest":"; they come back on a long rest"}.</p>`;
   if(!known.length){h+=`<p class="muted">No spells chosen yet. Pick them in the Spells step.</p>`;return h;}
   h+=`<table class="spt"><tr><th>Spell</th><th>Time</th><th>Range</th><th>Duration</th><th>Effect</th></tr>`;
