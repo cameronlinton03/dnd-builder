@@ -100,6 +100,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .count.done{color:var(--teal-ink);}
 .subhead{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-top:.9rem;font-size:.86rem;font-weight:600;}
 .asirow{display:grid;grid-template-columns:3.2rem 1fr 1fr;gap:.5rem;align-items:center;margin-top:.35rem;font-size:.85rem;}
+.asirow.asioff select{opacity:.55;font-style:italic}.asipick{margin-top:.25rem}
+dialog#featbox{max-width:680px;width:96vw;max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}dialog#featbox::backdrop{background:rgba(20,16,10,.45)}
+#feat_body{padding:.6rem 1rem 1rem}#feat_body h3{font-size:1rem;margin:.9rem 0 .1rem}.featrow{padding:.5rem 0;border-top:1px solid var(--line)}.featrow p{margin:.2rem 0 0;font-size:.88rem}.featrow .badge{margin-left:.4rem}.featrow.no b{color:var(--ink-soft)}
 .asifeat{display:flex;flex-wrap:wrap;gap:.5rem;margin:.35rem 0 0 3.7rem;font-size:.85rem}.asifeat select{flex:1 1 9rem;min-width:0}.asifh{margin:.3rem 0 .2rem 3.7rem}
 #cls_opts select[data-inv],#cls_opts select[data-invx]{margin-top:.4rem}
 details.adv{margin-top:.8rem;}
@@ -504,6 +507,7 @@ body.compact #dm_close{display:none}
   <p class="hint" id="method_hint"></p>
   <div class="scores" id="scores"></div>
   <div id="asi_wrap"></div>
+  <p class="hint" style="margin-top:.7rem"><button type="button" class="ghost sm" id="feat_btn" data-featbrowse="1">Browse feats</button></p>
 </fieldset>
 
 <fieldset>
@@ -613,6 +617,7 @@ body.compact #dm_close{display:none}
 </div>
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
+<dialog id="featbox" aria-labelledby="feat_title"><div class="lvhead"><b id="feat_title">Feats</b><button type="button" class="ghost sm" id="feat_x" aria-label="Close">×</button></div><div id="feat_body"></div></dialog>
 <dialog id="idea" aria-labelledby="idea_title"><div class="lvhead"><b id="idea_title">Character idea</b><button type="button" class="ghost sm" id="idea_x" aria-label="Close">×</button></div><div id="idea_body"></div>
 <div class="lvfoot"><button type="button" class="ghost sm" id="idea_again">Another one</button><button type="button" class="ghost sm" id="idea_use" title="Fill in the name and details in step 8">Use the details</button><button type="button" class="sm" id="idea_build" title="Open Quick build with this species, class, background and details">Build it</button></div></dialog>
 <dialog id="expbox" aria-labelledby="exp_title"><div class="lvhead"><b id="exp_title">Copy</b><button type="button" class="ghost sm" id="exp_x" aria-label="Close">×</button></div><div id="exp_body"></div><div class="lvfoot"><span id="exp_status" class="hint" aria-live="polite"></span><button type="button" class="ghost sm" id="exp_sel">Select all</button><button type="button" class="sm" id="exp_copy">Copy</button></div></dialog>
@@ -1786,7 +1791,8 @@ function takenFeats(exceptSlot){const f=[background().feat];if(species().featPic
   baseC().asi.forEach((l,i)=>{if(i!==exceptSlot&&l<=S.level){const x=asiFeatAt(i);if(x)f.push(x.f);}});f.push(...mcFeatsElsewhere());return f;}
 function asiFeatSelect(i,l){const x=(S.asiFeat||[])[i]||{},taken=takenFeats(i),ok=f=>f===x.f||!taken.includes(f)||REPEATABLE.has(f);
   const gen=Object.keys(GEN_FEATS).filter(f=>f!=="Ability Score Improvement"&&ok(f)&&featPrereqOK(GEN_FEATS[f])),ori=Object.keys(FEATS).filter(ok);
-  return `<select data-asif="${i}" aria-label="Level ${l} feat">${opt("","Choose a feat…",!x.f)}<optgroup label="General feats (+1 to a score)">${gen.map(f=>opt(f,f,x.f===f)).join("")}</optgroup><optgroup label="Origin feats">${ori.map(f=>opt(f,f,x.f===f)).join("")}</optgroup></select>`;}
+  const inFeat=(S.asi[i]||["",""])[0]==="";
+  return `<select data-asif="${i}" aria-label="Level ${l} feat">${opt("__asi","No feat: raise ability scores",!inFeat)}${inFeat&&!x.f?opt("","Choose a feat…",true):""}<optgroup label="General feats (+1 to a score)">${gen.map(f=>opt(f,f,inFeat&&x.f===f)).join("")}</optgroup><optgroup label="Origin feats">${ori.map(f=>opt(f,f,inFeat&&x.f===f)).join("")}</optgroup></select>`;}
 function asiFeatExtras(i){const x=(S.asiFeat||[])[i]||{},g=GEN_FEATS[x.f];if(!x.f)return `<p class="hint asifh">Pick the feat from your book or the list. General feats also give +1 to a score.</p>`;
   let o="";const sk=outer(skillSets);
   if(g&&g.ab){const a=featAb({...x});o+=`<select data-asia="${i}" aria-label="Feat ability increase">${g.ab.map(v=>opt(v,"+1 "+AF[v],a===v)).join("")}</select>`;}
@@ -1813,11 +1819,8 @@ function renderScores(){
   const mcRows=mcList().map(m=>{const i=S.mc.indexOf(m);const rows=withClass({...m,idx:i},()=>asiSlots(S.level).map((l,j)=>asiRowHTML(j,l,`${m.cls} ${l}`)).join(""));return rows?`<div data-mci="${i}"><div class="subhead"><span>${esc(m.cls)} Ability Score Improvements</span></div>${rows}</div>`:"";}).join("");
   const boonAt=S.level>=19||mcList().some(m=>m.level>=19);
   if(slots.length||boonAt||mcRows){
-    h+=`<div class="subhead"><span>Ability Score Improvements</span></div><p class="hint">Each row gives +1 to two scores, or +2 to one if you pick it twice. Or choose "Take a feat": general feats add +1 to a score, and origin feats can be taken here too</p>`;
-    const choices=[["","Take a feat"],...AB.map(a=>[a,"+1 "+AF[a]])],second=AB.map(a=>[a,"+1 "+AF[a]]);
-    slots.forEach((l,i)=>{const p=S.asi[i]||["",""];
-      if(p[0]!==""){h+=`<div class="asirow"><span>Lv ${l}</span><select data-asi="${i}" data-j="0" aria-label="Level ${l} first increase">${choices.map(([v,t])=>opt(v,t,p[0]===v)).join("")}</select><select data-asi="${i}" data-j="1" aria-label="Level ${l} second increase">${second.map(([v,t])=>opt(v,t,(p[1]||p[0])===v)).join("")}</select></div>`;return;}
-      h+=`<div class="asirow"><span>Lv ${l}</span><select data-asi="${i}" data-j="0" aria-label="Level ${l} choice">${choices.map(([v,t])=>opt(v,t,p[0]===v)).join("")}</select>${asiFeatSelect(i,l)}</div>${asiFeatExtras(i)}`;});
+    h+=`<div class="subhead"><span>Ability Score Improvements</span></div><p class="hint">Each level here gives +1 to two scores (or +2 to one if you pick it twice), or a feat instead. Choose a feat on the line under the two score boxes and they grey out, because the feat replaces that level's increase. General feats add +1 to a score of their own. <button type="button" class="act" data-featbrowse="1">Browse feats</button></p>`;
+    slots.forEach((l,i)=>{h+=asiRowHTML(i,l);});
     h+=mcRows;
     if(boonAt) h+=`<div class="asirow"><span>Lv 19</span><select data-k="boon" aria-label="Epic Boon increase">${[["","Epic Boon: no score change"],...AB.map(a=>[a,"Epic Boon: +1 "+AF[a]])].map(([v,t])=>opt(v,t,S.boon===v)).join("")}</select><span></span></div>`;
   }
@@ -1922,7 +1925,9 @@ function applyFormChange(t){const id=t.id;
     if(S.method==="array"){const base=baseScores();const other=AB.find(x=>x!==a&&base[x]===v);S.scores={...base};if(other)S.scores[other]=base[a];S.scores[a]=v;}
     else S.scores={...baseScores(),[a]:Math.max(3,Math.min(18,v))};}
   else if(t.dataset.asi!==undefined){const i=+t.dataset.asi,j=+t.dataset.j;S.asi[i]=S.asi[i]||["",""];S.asi[i][j]=t.value;if(j===0&&t.value&&!S.asi[i][1])S.asi[i][1]=t.value;}
-  else if(t.dataset.asif!==undefined){const i=+t.dataset.asif;S.asiFeat=[...(S.asiFeat||[])];S.asiFeat[i]={f:t.value};}
+  else if(t.dataset.asif!==undefined){const i=+t.dataset.asif;S.asiFeat=[...(S.asiFeat||[])];
+    if(t.value==="__asi"){S.asiFeat[i]={};S.asi=[...S.asi];S.asi[i]=null;defaultAsi();if(!S.asi[i]||S.asi[i][0]==="")S.asi[i]=["str","str"];}
+    else{S.asi=[...S.asi];S.asi[i]=["",""];S.asiFeat[i]={f:t.value};}}
   else if(t.dataset.asia!==undefined||t.dataset.asisk!==undefined||t.dataset.asiex!==undefined){const i=+(t.dataset.asia??t.dataset.asisk??t.dataset.asiex),k=t.dataset.asia!==undefined?"a":t.dataset.asisk!==undefined?"sk":"ex";S.asiFeat=[...(S.asiFeat||[])];S.asiFeat[i]={...(S.asiFeat[i]||{}),[k]:t.value};}
   else if(t.dataset.inv!==undefined){const i=+t.dataset.inv;S.inv=[...(S.inv||[])];S.invX=[...(S.invX||[])];S.inv[i]=t.value;S.invX[i]="";}
   else if(t.dataset.invx!==undefined){const i=+t.dataset.invx;S.invX=[...(S.invX||[])];S.invX[i]=t.value;}
@@ -3500,9 +3505,9 @@ function renderLevelUp(){const e=lvEntry(),L=e.level,s=snapshot(),dlg=$("lvlup")
    ${choices.map(x=>`<div class="lvc${x.done?" done":""}"><div class="lvct">${x.done?"✓ ":""}${esc(x.t)}</div>${x.h}</div>`).join("")}`;
   $("lv_status").textContent=left?`${left} choice${left>1?"s":""} left. You can also finish them later.`:"All set.";}
 function closeLevelUp(){const d=$("lvlup");if(d.close)d.close();else d.removeAttribute("open");schedulePreview(true);}
-function asiRowHTML(i,l,tag){const p=S.asi[i]||["",""],choices=[["","Take a feat"],...AB.map(a=>[a,"+1 "+AF[a]])],second=AB.map(a=>[a,"+1 "+AF[a]]);tag=tag||`Lv ${l}`;
-  if(p[0]!=="")return `<div class="asirow"><span>${tag}</span><select data-asi="${i}" data-j="0" aria-label="Level ${l} first increase">${choices.map(([v,t])=>opt(v,t,p[0]===v)).join("")}</select><select data-asi="${i}" data-j="1" aria-label="Level ${l} second increase">${second.map(([v,t])=>opt(v,t,(p[1]||p[0])===v)).join("")}</select></div><p class="hint">Pick the same ability twice for +2 (maximum 20).</p>`;
-  return `<div class="asirow"><span>${tag}</span><select data-asi="${i}" data-j="0" aria-label="Level ${l} choice">${choices.map(([v,t])=>opt(v,t,p[0]===v)).join("")}</select>${asiFeatSelect(i,l)}</div>${asiFeatExtras(i)}`;}
+function asiRowHTML(i,l,tag){const p=S.asi[i]||["",""],ab=AB.map(a=>[a,"+1 "+AF[a]]),feat=p[0]==="";tag=tag||`Lv ${l}`;
+  const box=(j,nm)=>`<select data-asi="${i}" data-j="${j}" aria-label="Level ${l} ${nm} increase"${feat?' disabled title="A feat is chosen for this level, so there is no score increase to set here"':""}>${feat?opt("","Feat taken",true):ab.map(([v,t])=>opt(v,t,(j?(p[1]||p[0]):p[0])===v)).join("")}</select>`;
+  return `<div class="asirow${feat?" asioff":""}"><span>${tag}</span>${box(0,"first")}${box(1,"second")}</div><div class="asifeat asipick">${asiFeatSelect(i,l)}</div>${feat?asiFeatExtras(i):`<p class="hint asifh">Pick the same ability twice for +2 (maximum 20).</p>`}`;}
 
 /* ---------- the interactive sheet: clicks inside the preview update the character ---------- */
 function playLongRest(s,t){const back=[];
@@ -4597,6 +4602,20 @@ ${line("role","Once was",IDEA.role)}${line("look","Looks",IDEA.look+".")}${line(
 function ideaOpen(){ideaNew();const d=$("idea");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");d.scrollTop=0;}
 function ideaClose(){const d=$("idea");if(d.close)d.close();else d.removeAttribute("open");}
 function ideaDetails(){return {name:IDEA.name,title:IDEA.role,appearance:IDEA.look+".",personality:`${IDEA.pers}. Quirk: ${IDEA.quirk}.`,goals:IDEA.goal+".",secret:IDEA.secret+".",notes:IDEA.story+"."};}
+/* ----- browse feats ----- */
+let FEATQ="";
+function featListHTML(){const e=esc,q=FEATQ.trim().toLowerCase(),have=takenFeats(-1).filter(Boolean),slots=asiSlots(S.level),next=C().asi?baseC().asi.find(l=>l>S.level):null;
+  const hit=(n,d,x)=>!q||`${n} ${d} ${x||""}`.toLowerCase().includes(q);
+  const row=(n,d,meta,ok)=>`<div class="featrow${ok?"":" no"}"><b>${e(n)}</b>${have.includes(n)?'<span class="badge pc">You have this</span>':""}${ok?"":'<span class="badge">Prerequisite not met</span>'}${meta?`<p class="small">${meta}</p>`:""}<p>${e(d)}${/[.!?]$/.test(d)?"":"."}</p></div>`;
+  const ori=Object.keys(FEATS).filter(n=>hit(n,FEATS[n])).map(n=>row(n,FEATS[n],REPEATABLE.has(n)?"Can be taken more than once":"",true)).join("");
+  const gen=Object.keys(GEN_FEATS).filter(n=>n!=="Ability Score Improvement"&&hit(n,GEN_FEATS[n].sum,GEN_FEATS[n].note)).map(n=>{const g=GEN_FEATS[n],ok=featPrereqOK(g);
+    return row(n,g.sum||"",[g.ab?`+1 ${g.ab.map(a=>AF[a]).join(" or ")}`:"",g.note?`Prerequisite: ${e(g.note)}`:"",REPEATABLE.has(n)?"Can be taken more than once":""].filter(Boolean).join(" · "),ok);}).join("");
+  const when=slots.length?`This character has a feat choice at level${slots.length>1?"s":""} ${slots.join(", ")}: pick it on the line under the score boxes in Ability scores.`:`This character's first feat choice comes at level ${next||4}. Until then the only feats are the ones from the background${species().featPick?" and the Human's extra origin feat":""}.`;
+  return `<p class="hint" style="margin:0 0 .5rem">${e(when)}</p>${ori?`<h3>Origin feats</h3><p class="hint" style="margin:0">One comes with your background. They can also be taken at any feat level.</p>${ori}`:""}${gen?`<h3>General feats</h3><p class="hint" style="margin:0">Level 4 and up, in place of that level's ability score increase. Each adds +1 to a score.</p>${gen}`:""}${!ori&&!gen?'<p class="hint">No feats match that search.</p>':""}<p class="hint" style="margin-top:.8rem">Fighting Style feats are chosen with the class in step 1, and the Epic Boon at level 19 is in the Ability scores step.</p>`;}
+function featBrowse(){FEATQ="";$("feat_body").innerHTML=`<label class="sr" for="feat_q">Search feats</label><input type="search" id="feat_q" placeholder="Search feats, e.g. archery, heal, charisma"><div id="feat_list">${featListHTML()}</div>`;const d=$("featbox");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");d.scrollTop=0;}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-featbrowse]")){e.preventDefault();featBrowse();}});
+$("feat_x").addEventListener("click",()=>$("featbox").close());$("featbox").addEventListener("click",e=>{if(e.target===$("featbox"))$("featbox").close();});
+$("featbox").addEventListener("input",e=>{if(e.target.id==="feat_q"){FEATQ=e.target.value;$("feat_list").innerHTML=featListHTML();}});
 $("idea_btn").addEventListener("click",ideaOpen);$("qb_idea").addEventListener("click",()=>{ideaOpen();});
 $("idea_x").addEventListener("click",ideaClose);$("idea").addEventListener("click",e=>{if(e.target===$("idea"))ideaClose();const b=e.target.closest("[data-idswap]");if(!b)return;const k=b.dataset.idswap;ideaRoll(k);if(k==="sp")ideaRoll("name");ideaRender();});
 $("idea_again").addEventListener("click",ideaNew);
