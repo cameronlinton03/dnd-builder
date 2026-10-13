@@ -2018,6 +2018,7 @@ const SHEET_CSS=`
 .turn h3{margin:0 0 4px;font:600 12px 'Work Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--rule)}
 .turn ul{margin:0;padding-left:0;list-style:none}.turn li{margin:0 0 5px}.turn ul ul{margin-top:3px;padding-left:10px}.turn .tatk li{margin:0 0 2px}
 .turn .td{color:var(--soft);font-size:11.5px}.turn details summary{cursor:pointer}.turn details .td{display:block;margin:2px 0 0 12px}
+.turn .tspl{margin:2px 0 0;font-size:11.5px}
 .turn .tsp{display:flex;flex-wrap:wrap;gap:3px 5px;margin-top:3px}.turn .tsp>*{border:1px solid var(--line);border-radius:10px;padding:0 7px;font-size:11.5px}.turn .tsp i{color:var(--soft);font-style:normal;font-size:10px}
 @media(max-width:660px){.turn{grid-template-columns:1fr}}
 .turn.flat{display:block}.turn.flat .tc{border:0;border-top:1px solid var(--line);border-radius:0;padding:5px 0 2px;background:none}
@@ -3417,7 +3418,7 @@ function printSheetHTML(opt){opt=opt||{};
   return withState(st,()=>{
     const s=snapshot(),e=esc,t=S.track,doc=new DOMParser().parseFromString(sheetHTML("pc",true,false),"text/html");
     const sec=(title,exact)=>{const h=[...doc.querySelectorAll("h2")].find(x=>exact?x.textContent.trim()===title:x.textContent.trim().startsWith(title));if(!h)return "";
-      let out=h.outerHTML,n=h.nextElementSibling;while(n&&n.tagName!=="H2"){if(!n.classList.contains("tip")&&!n.classList.contains("foot"))out+=n.outerHTML;n=n.nextElementSibling;}return out;};
+      let out="",n=h.nextElementSibling;while(n&&n.tagName!=="H2"){if(!n.classList.contains("tip")&&!n.classList.contains("foot"))out+=n.outerHTML;n=n.nextElementSibling;}return out.trim()?h.outerHTML+out:"";};
     const abil=(doc.querySelector(".abil")||{outerHTML:""}).outerHTML;
     const L=s.TL||s.level,cur=opt.pencil?"":String(curHP(s)),temp=opt.pencil?"":(t.temp?String(t.temp):"");
     const blank=(v,n)=>v!==""&&v!=null?`<b>${e(v)}</b>`:"_".repeat(n||8);
@@ -4487,7 +4488,8 @@ function turnHTML(s,live){const e=esc,R=(key,html)=>live?`<span class="rl" data-
   const item=(name,text,extra)=>`<li><b>${e(name)}</b>${extra||""}${text?` <span class="td">${e(text)}</span>`:""}</li>`;
   const det=(name,text)=>`<li><details><summary><b>${e(name)}</b></summary><span class="td">${e(text)}</span></details></li>`;
   const atkList=s.attacks.map((a,i)=>`<li>${e(a.name)}: ${R("atk:"+i,`${fmt(a.hit)} to hit`)}, ${R("dmg:"+i,`${e(a.dmg)} ${e(a.type)}`)}${a.vers?` (${R("vers:"+i,`${e(a.vers)} two-handed`)})`:""}</li>`).join("");
-  const spellChips=list=>list.length?`<div class="tsp">${list.map(x=>R(`spell:${x.n}|${x.ab}`,`${e(x.n)}${x.l?` <i>${x.l}</i>`:""}`)).join("")}</div>`:"";
+  const spellChips=list=>!list.length?"":live?`<div class="tsp">${list.map(x=>R(`spell:${x.n}|${x.ab}`,`${e(x.n)}${x.l?` <i>${x.l}</i>`:""}`)).join("")}</div>`
+    :`<p class="tspl">${list.map(x=>`${e(x.n)}${x.l?` <span class="muted">(level ${x.l})</span>`:""}`).join(", ")}</p>`;
   const sk=nm=>{const x=s.skills.find(y=>y.name===nm);return x?R("skill:"+nm,`${nm} ${fmt(x.bonus)}`):nm;};
   // action
   let A=`<li><b>Attack</b> <span class="td">${n>1?`Make <b>${["","one","two","three","four"][n]||n} attacks</b> each time you take this action.`:"Make one attack."} Instead of damage, an Unarmed Strike can ${R("grapple",`grapple or shove`)} (the target saves against DC ${8+s.pb+s.mods.str}).</span><ul class="tatk">${atkList}</ul></li>`;
