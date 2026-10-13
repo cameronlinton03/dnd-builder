@@ -3329,7 +3329,7 @@ function makePdfDoc(d,win,label,size){
         paddingLeft:()=>pad.l,paddingRight:()=>pad.r,paddingTop:()=>pad.t,paddingBottom:()=>pad.b}};}
   function grid(el){
     const c=cs(el),cols=c.gridTemplateColumns.split(" ").map(px).filter(v=>v>0),gap=px(c.columnGap)*PT,rgap=px(c.rowGap)*PT;
-    const kids=[...el.children].filter(k=>cs(k).display!=="none");if(!cols.length)return {stack:kids.flatMap(conv)};
+    const kids=[...el.children].filter(k=>cs(k).display!=="none");if(!kids.length)return null;if(!cols.length)return {stack:kids.flatMap(conv)};
     const body=[];for(let i=0;i<kids.length;i+=cols.length){const row=kids.slice(i,i+cols.length).map(k=>{const kc=cs(k);return k.tagName==="TABLE"||kc.display==="grid"||k.tagName==="UL"?{stack:conv(k)}:box(k,blocks(k));});while(row.length<cols.length)row.push({text:""});body.push(row);}
     const total=cols.reduce((a,b)=>a+b,0),W=el.getBoundingClientRect().width*PT*PDFW/540-gap*(cols.length-1);
     return {table:{widths:cols.map(w=>w/total*W),body,dontBreakRows:!el.classList.contains("pp-cols")},layout:{hLineWidth:()=>0,vLineWidth:()=>0,paddingLeft:i=>i?gap/2:0,paddingRight:i=>i<cols.length-1?gap/2:0,paddingTop:i=>i?rgap/2:0,paddingBottom:()=>rgap/2}};}
@@ -3359,15 +3359,16 @@ function makePdfDoc(d,win,label,size){
     else{const b=blocks(el);if(!b.length)return [];node=box(el,b);if(/^H[1-3]$/.test(el.tagName)){node=Array.isArray(node)?{stack:node}:node;node.headlineLevel=1;}
       const m=marg(c);if(m[1]||m[3]){node=node.table||node.stack||node.text!==undefined||node.columns?{...node,margin:[...(node.margin&&node.margin.length===4?[node.margin[0],node.margin[1]+m[1],node.margin[2],node.margin[3]+m[3]]:m)]}:node;}}
     if(!node)return [];
-    if(el.classList.contains("pgbrk"))node={stack:[node],headlineLevel:2}; // a new page unless already near the top
     // header rule for h2 (border-bottom)
     if(el.tagName==="H2"){const bb=px(c.borderBottomWidth);if(bb){const col=pdfColor(c.borderBottomColor)||"#7a5424";const hb=blocks(el);node={stack:[{stack:hb,margin:[0,0,0,1]},{canvas:[{type:"line",x1:0,y1:0,x2:Math.min(PDFW,el.getBoundingClientRect().width*PT*PDFW/540),y2:0,lineWidth:bb*PT,lineColor:col}]}],margin:marg(c),headlineLevel:1};}}
+    if(el.classList.contains("pgbrk"))node={stack:[node],headlineLevel:2}; // a new page unless already near the top
+    if(el.classList.contains("pgnew"))node={stack:[node],pageBreak:"before"}; // always a new page
     return [node];}
   const page=d.querySelector(".page");
   const content=[...page.children].flatMap(conv);
   return {pageSize:size==="A4"?"A4":"LETTER",pageMargins:[36,36,36,40],content,defaultStyle:{font:"Roboto",fontSize:9.4,lineHeight:1.1,color:"#1d211c"},
     info:{title:label,creator:"Character Ledger"},
-    pageBreakBefore:(node,after)=>(node.headlineLevel===1&&(after.length===0||(node.startPosition&&node.startPosition.verticalRatio>0.93)))||(node.headlineLevel===2&&node.startPosition&&node.startPosition.verticalRatio>0.3),
+    pageBreakBefore:(node,after)=>(node.headlineLevel===1&&(!after||after.length===0||(node.startPosition&&node.startPosition.verticalRatio>0.93)))||(node.headlineLevel===2&&node.startPosition&&node.startPosition.verticalRatio>0.3),
     footer:(cur,n)=>({columns:[{text:label,alignment:"left"},{text:`Page ${cur} of ${n}`,alignment:"right"}],margin:[36,12,36,0],fontSize:7,color:"#777777"})};}
 async function makePDF(mode,progress,opt){opt=opt||{};
   await pdfLibs();progress&&progress(1,2);
@@ -3378,7 +3379,11 @@ async function makePDF(mode,progress,opt){opt=opt||{};
     await new Promise(r=>{fr.onload=r;fr.srcdoc=html;});const d=fr.contentDocument;try{await d.fonts.ready;}catch(e){}
     const label=`${S.name||"Unnamed"} · ${mode==="pc"?"Character sheet":"Stat block"}`;
     PDFW=opt.size==="A4"?523:540;let doc;try{doc=makePdfDoc(d,fr.contentWindow,label,opt.size);}finally{PDFW=540;}progress&&progress(2,2);
-    return await new Promise((res,rej)=>{try{window.pdfMake.createPdf(doc).getBlob(res);}catch(e){rej(e);}});
+    return await new Promise((res,rej)=>{const oops=ev=>{const r=ev.reason||ev.error;if(r&&/pdfmake|preprocess|layout/i.test(String(r.stack||""))){done();rej(r);}};
+      const done=()=>{window.removeEventListener("unhandledrejection",oops);window.removeEventListener("error",oops);clearTimeout(tm);};
+      const tm=setTimeout(()=>{done();rej(new Error("PDF timed out"));},60000);
+      window.addEventListener("unhandledrejection",oops);window.addEventListener("error",oops);
+      try{window.pdfMake.createPdf(doc).getBlob(b=>{done();res(b);});}catch(e){done();rej(e);}});
   }finally{fr.remove();}
 }
 
@@ -3396,18 +3401,19 @@ const PRINT_CSS=`
 .pp-k{font-size:9.5px;font-weight:600;color:#40463f;text-transform:uppercase;letter-spacing:.05em}
 .pp-hp .big{font:700 17px Spectral,Georgia,serif}.pp-hp p{margin:2px 0;font-size:11px}
 .pp-cols{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:0 18px}
-.pp-cols td{padding:1.5px 4px;font-size:11.5px}.pp-cols .kv{font-size:11.5px;gap:1px 10px}
+.pp-cols td{padding:1px 4px;font-size:11.5px;line-height:1.35}.pp-cols .kv{font-size:11.5px;gap:1px 10px}
 .pp-cols h2{border-bottom:0;padding-bottom:0}
-.pp h2{margin:10px 0 4px}
+.pp h2{margin:8px 0 3px}
 .abil{margin-top:2px}
 .rl{border-bottom:1px solid #9b9586;height:21px;color:#ffffff;font-size:10px}
 .pp-small{font-size:10.5px;color:#40463f;margin:3px 0 0}
 .fd{font-size:10.5px}
+.pp select,.pp input,.pp button{display:none!important}.pp .tip{font-size:10.5px;margin:4px 0}.pp .turn{grid-template-columns:1fr 1fr}
 .pp-coins{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:4px 0}
 .pp-coins>div{border:1px solid #1d211c;border-radius:3px;padding:3px 6px;font-size:11px;min-height:30px}
 `;
 function printSheetHTML(opt){opt=opt||{};
-  const st=JSON.parse(JSON.stringify(S));st.tips=false;if(opt.pencil){const t0=defaults().track;st.track={...t0,res:{}};}
+  const st=JSON.parse(JSON.stringify(S));st.tips=!!opt.guide;if(opt.pencil){const t0=defaults().track;st.track={...t0,res:{}};}
   return withState(st,()=>{
     const s=snapshot(),e=esc,t=S.track,doc=new DOMParser().parseFromString(sheetHTML("pc",true,false),"text/html");
     const sec=(title,exact)=>{const h=[...doc.querySelectorAll("h2")].find(x=>exact?x.textContent.trim()===title:x.textContent.trim().startsWith(title));if(!h)return "";
@@ -3433,23 +3439,28 @@ function printSheetHTML(opt){opt=opt||{};
 <h2>Abilities and saving throws</h2>${abil}
 <div class="pp-cols"><div>${sec("Skills",true)}<p class="pp-small">Conditions: ____________________________</p></div><div>${sec("Attacks",true)}${sec("Class resources")}${sec("Limited uses",true)}</div></div>
 ${sec("Proficiencies",true)}`;
-    const back=[sec("Weapon properties",true),sec("Class features",true),sec("Species traits"),sec("Feats"),sec("Spells",true),
+    const tips=opt.guide?[...doc.querySelectorAll(".tip")].map(x=>x.outerHTML).join(""):"";
+    const guide=opt.guide?[`<h2>How to read this sheet</h2>${tips}`,sec("On your turn",true)].join(""):"";
+    const back=[guide,sec("Weapon properties",true),sec("Class features",true),sec("Species traits"),sec("Feats"),sec("Spells",true),
       sec("Inventory",true),sec("Other gear",true)||sec("Equipment",true),`<h2>Coins</h2><div class="pp-coins">${coins}</div>`,
       opt.details!==false?details.map(([k,v])=>`<h2>${k}</h2><p class="pre">${e(v)}</p>`).join("")+`<h2>Notes</h2>${lines(opt.details===false?6:10)}`:`<h2>Notes</h2>${lines(10)}`,
-      opt.spells!==false?sec("Spell descriptions",true):""].filter(Boolean).join("\n");
+      opt.guide?sec("Levelling up",true):"",
+      opt.spells!==false?sec("Spell descriptions",true).replace(/^<h2>/,'<h2 class="pgnew">'):""].filter(Boolean).join("\n");
     const backHTML=back.replace(/^<h2>/,'<h2 class="pgbrk">');
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${e(s.name)} · Printable sheet</title>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>${SHEET_CSS}${PRINT_CSS}</style></head><body><div class="page pp">${front}${backHTML}
 <p class="foot">Made with Character Ledger using the 2024 rules. This work includes material from the System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd, licensed under the Creative Commons Attribution 4.0 International License.</p></div></body></html>`;});}
-const PRINTOPT={pencil:true,spells:true,details:true,size:"LETTER"};
+const PRINTOPT={pencil:true,spells:true,details:true,guide:false,size:"LETTER"};
 try{Object.assign(PRINTOPT,JSON.parse(localStorage.getItem("ledger_print")||"{}"));}catch(e){}
 function printOpen(){const npc=sheetMode()==="npc",o=PRINTOPT,caster=!npc&&knownSpells().length>0;
-  $("print_body").innerHTML=`<p class="hint" style="margin-top:0">${npc?"A clean copy of this stat block, sized for paper.":"Page one holds everything you need at the table: scores, skills, attacks, spells and hit points. Features, spells, gear and notes follow on the next pages. The Guidance explanations are left off."}</p>
+  $("print_body").innerHTML=`<p class="hint" style="margin-top:0">${npc?"A clean copy of this stat block, sized for paper.":"Page one holds everything you need at the table: scores, skills, attacks, spells and hit points. Features, spells, gear and notes follow on the next pages."}</p>
 ${npc?"":`<label class="chk"><input type="checkbox" data-po="pencil"${o.pencil?" checked":""}> Leave hit points, spell slots and uses blank for pencil</label>
 <p class="hint" style="margin:0 0 .4rem 1.45rem">Untick to print where the character is right now (current HP, slots used and so on).</p>
-${caster?`<label class="chk"><input type="checkbox" data-po="spells"${o.spells?" checked":""}> Include full spell descriptions at the end</label>`:""}
-<label class="chk"><input type="checkbox" data-po="details"${o.details?" checked":""}> Include appearance, personality, goals and backstory</label>`}
+${caster?`<label class="chk"><input type="checkbox" data-po="spells"${o.spells?" checked":""}> Include full spell descriptions, starting on a new page at the end</label>`:""}
+<label class="chk"><input type="checkbox" data-po="details"${o.details?" checked":""}> Include appearance, personality, goals and backstory</label>
+<label class="chk"><input type="checkbox" data-po="guide"${o.guide?" checked":""}> Include Guidance</label>
+<p class="hint" style="margin:0 0 .4rem 1.45rem">Adds a "How to read this sheet" page after page one (what each number means and how to roll it), the On your turn panel, and the levelling-up guide near the end. Good for new players; adds a few pages.</p>`}
 <label for="print_size" style="margin-top:.6rem">Paper size</label><select id="print_size" style="max-width:16rem"><option value="LETTER"${o.size!=="A4"?" selected":""}>Letter (8.5 × 11 in)</option><option value="A4"${o.size==="A4"?" selected":""}>A4</option></select>`;
   $("print_status").textContent="";const d=$("printbox");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");}
 async function printMake(){const b=$("print_go"),st=$("print_status"),npc=sheetMode()==="npc";if(b.disabled)return;
