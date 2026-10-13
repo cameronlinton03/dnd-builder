@@ -101,6 +101,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .subhead{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-top:.9rem;font-size:.86rem;font-weight:600;}
 .asirow{display:grid;grid-template-columns:3.2rem 1fr 1fr;gap:.5rem;align-items:center;margin-top:.35rem;font-size:.85rem;}
 .asirow.asioff select{opacity:.55;font-style:italic}.asipick{margin-top:.25rem}
+dialog#printbox{max-width:520px;width:94vw;max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}dialog#printbox::backdrop{background:rgba(20,16,10,.45)}
 dialog#featbox{max-width:680px;width:96vw;max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:0}dialog#featbox::backdrop{background:rgba(20,16,10,.45)}
 #feat_body{padding:.6rem 1rem 1rem}#feat_body h3{font-size:1rem;margin:.9rem 0 .1rem}.featrow{padding:.5rem 0;border-top:1px solid var(--line)}.featrow p{margin:.2rem 0 0;font-size:.88rem}.featrow .badge{margin-left:.4rem}.featrow.no b{color:var(--ink-soft)}
 .asifeat{display:flex;flex-wrap:wrap;gap:.5rem;margin:.35rem 0 0 3.7rem;font-size:.85rem}.asifeat select{flex:1 1 9rem;min-width:0}.asifh{margin:.3rem 0 .2rem 3.7rem}
@@ -583,7 +584,7 @@ body.compact #dm_close{display:none}
     </div>
     <button type="button" class="ghost sm" id="play_btn" aria-pressed="false">Play mode</button><span id="npcexp" class="dmonly sbexp" hidden><button type="button" class="ghost sm" data-exp="md" data-src="cur">Copy for Obsidian</button><button type="button" class="ghost sm" data-exp="word" data-src="cur">Copy for Word</button></span>
     <label class="chk small" id="tips_wrap" style="padding:0;margin-left:auto" title="Guidance: shows the explanations on the sheet (what each number means, the On your turn panel, how levelling up works)"><input type="checkbox" id="tips"> Guidance</label>
-    <span class="dlgrp"><button type="button" class="alt" id="dl_btn" data-share="1">Share</button></span>
+    <span class="dlgrp"><button type="button" class="ghost sm" id="print_btn" title="A PDF laid out for paper: everything for the table on page one, with space to write">Print</button><button type="button" class="alt" id="dl_btn" data-share="1">Share</button></span>
   </div>
   <iframe id="frame" title="Character sheet preview"></iframe>
   <p id="dl_status" style="border-bottom:0">Share sends a printable PDF of this sheet plus the character file, which opens in this builder. On a phone, choose Save to Files to keep them, or send them to your DM.</p>
@@ -618,6 +619,7 @@ body.compact #dm_close{display:none}
 </div>
 <div id="qb_done" hidden><div id="qb_summary"></div></div>
 <div class="lvfoot"><span id="qb_warn" class="hint"></span><button type="button" class="ghost sm" id="qb_cancel">Cancel</button><button type="button" class="ghost sm" id="qb_back" hidden>Change the four choices</button><button type="button" class="ghost sm" id="qb_reroll" hidden>Reroll choices</button><button type="button" id="qb_go">Build character</button><button type="button" id="qb_finish" hidden>Done</button></div></dialog>
+<dialog id="printbox" aria-labelledby="print_title"><div class="lvhead"><b id="print_title">Print</b><button type="button" class="ghost sm" id="print_x" aria-label="Close">×</button></div><div id="print_body" style="padding:.6rem 1rem .4rem"></div><div class="lvfoot"><span id="print_status" class="hint" aria-live="polite" style="margin-right:auto"></span><button type="button" id="print_go">Make printable PDF</button></div></dialog>
 <dialog id="featbox" aria-labelledby="feat_title"><div class="lvhead"><b id="feat_title">Feats</b><button type="button" class="ghost sm" id="feat_x" aria-label="Close">×</button></div><div id="feat_body"></div></dialog>
 <dialog id="idea" aria-labelledby="idea_title"><div class="lvhead"><b id="idea_title">Character idea</b><button type="button" class="ghost sm" id="idea_x" aria-label="Close">×</button></div><div id="idea_body"></div>
 <div class="lvfoot"><button type="button" class="ghost sm" id="idea_again">Another one</button><button type="button" class="ghost sm" id="idea_use" title="Fill in the name and details in step 8">Use the details</button><button type="button" class="sm" id="idea_build" title="Open Quick build with this species, class, background and details">Build it</button></div></dialog>
@@ -3276,7 +3278,8 @@ function pdfDot(kind){ // proficiency dot drawn as a shape (the PDF font has no 
   return {svg:`<svg width="7" height="7" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="${fill}" stroke="${kind==="x"?"#7a2e1d":"#1d211c"}" stroke-width="1.2"/>${kind==="x"?'<circle cx="5" cy="5" r="1.6" fill="#fff"/>':""}</svg>`,width:7,margin:[0,2,3,0]};}
 function pdfBoxes(n,used){let s="";for(let i=0;i<n;i++)s+=`<rect x="${i*12+1}" y="1" width="9" height="9" fill="${i<used?"#1d211c":"none"}" stroke="#1d211c" stroke-width="1"/>`;
   return {svg:`<svg width="${n*12}" height="11" viewBox="0 0 ${n*12} 11">${s}</svg>`,width:n*9,margin:[2,1,8,0]};}
-function makePdfDoc(d,win,label){
+let PDFW=540; // usable page width in points: letter 540, A4 523
+function makePdfDoc(d,win,label,size){
   const cs=el=>win.getComputedStyle(el),px=v=>parseFloat(v)||0;
   const isInline=el=>el.nodeType===3||el.tagName==="BR"||(!el.classList.contains("dot")&&!el.classList.contains("box")&&!el.classList.contains("boxes")&&/^(inline|contents)/.test(cs(el).display));
   // inline runs
@@ -3319,7 +3322,7 @@ function makePdfDoc(d,win,label){
     const pad={l:px(c.paddingLeft)*PT,r:px(c.paddingRight)*PT,t:px(c.paddingTop)*PT,b:px(c.paddingBottom)*PT};
     if(!bg&&!B.t&&!B.r&&!B.b&&!B.l){if(pad.t||pad.b||pad.l||pad.r)return {stack:content,margin:[pad.l,pad.t,pad.r,pad.b]};return content.length===1?content[0]:{stack:content};}
     const small=el.getBoundingClientRect().height<380;
-    if(!small){const rule=(w,col)=>w?[{canvas:[{type:"line",x1:0,y1:0,x2:540,y2:0,lineWidth:w,lineColor:col}],margin:[0,0,0,0]}]:[];
+    if(!small){const rule=(w,col)=>w?[{canvas:[{type:"line",x1:0,y1:0,x2:PDFW,y2:0,lineWidth:w,lineColor:col}],margin:[0,0,0,0]}]:[];
       return {stack:[...rule(B.t,bc("Top")),{stack:content,margin:[Math.min(pad.l,10),pad.t,Math.min(pad.r,10),pad.b]},...rule(B.b,bc("Bottom"))]};}
     return {table:{widths:["*"],body:[[{stack:content,fillColor:bg||undefined}]],dontBreakRows:small},unbreakable:small,
       layout:{hLineWidth:i=>i===0?B.t:B.b,vLineWidth:i=>i===0?B.l:B.r,hLineColor:i=>i===0?bc("Top"):bc("Bottom"),vLineColor:i=>i===0?bc("Left"):bc("Right"),
@@ -3328,12 +3331,12 @@ function makePdfDoc(d,win,label){
     const c=cs(el),cols=c.gridTemplateColumns.split(" ").map(px).filter(v=>v>0),gap=px(c.columnGap)*PT,rgap=px(c.rowGap)*PT;
     const kids=[...el.children].filter(k=>cs(k).display!=="none");if(!cols.length)return {stack:kids.flatMap(conv)};
     const body=[];for(let i=0;i<kids.length;i+=cols.length){const row=kids.slice(i,i+cols.length).map(k=>{const kc=cs(k);return k.tagName==="TABLE"||kc.display==="grid"||k.tagName==="UL"?{stack:conv(k)}:box(k,blocks(k));});while(row.length<cols.length)row.push({text:""});body.push(row);}
-    const total=cols.reduce((a,b)=>a+b,0),W=el.getBoundingClientRect().width*PT-gap*(cols.length-1);
-    return {table:{widths:cols.map(w=>w/total*W),body,dontBreakRows:true},layout:{hLineWidth:()=>0,vLineWidth:()=>0,paddingLeft:i=>i?gap/2:0,paddingRight:i=>i<cols.length-1?gap/2:0,paddingTop:i=>i?rgap/2:0,paddingBottom:()=>rgap/2}};}
+    const total=cols.reduce((a,b)=>a+b,0),W=el.getBoundingClientRect().width*PT*PDFW/540-gap*(cols.length-1);
+    return {table:{widths:cols.map(w=>w/total*W),body,dontBreakRows:!el.classList.contains("pp-cols")},layout:{hLineWidth:()=>0,vLineWidth:()=>0,paddingLeft:i=>i?gap/2:0,paddingRight:i=>i<cols.length-1?gap/2:0,paddingTop:i=>i?rgap/2:0,paddingBottom:()=>rgap/2}};}
   function table(el){
     const rows=[...el.querySelectorAll(":scope>tbody>tr,:scope>thead>tr,:scope>tr")];if(!rows.length)return null;
     const ref=rows.reduce((a,r)=>r.cells.length>a.cells.length?r:a,rows[0]),W=el.getBoundingClientRect().width;
-    const widths=[...ref.cells].map(td=>td.getBoundingClientRect().width/W*540*Math.min(1,W/720));
+    const widths=[...ref.cells].map(td=>td.getBoundingClientRect().width/W*PDFW*Math.min(1,W/720));
     const body=rows.map(tr=>{const r=[];[...tr.cells].forEach(td=>{const c=cs(td),cell={stack:blocks(td)};if(c.textAlign==="right")cell.alignment="right";const bg=pdfColor(c.backgroundColor)||pdfColor(cs(tr).backgroundColor);if(bg)cell.fillColor=bg;
       if(td.colSpan>1){cell.colSpan=td.colSpan;r.push(cell);for(let k=1;k<td.colSpan;k++)r.push({});}else r.push(cell);});while(r.length<widths.length)r.push({text:""});return r;});
     const line=i=>{const tr=rows[i-1];if(!tr||!tr.cells[0])return 0;return px(cs(tr.cells[0]).borderBottomWidth)*PT;};
@@ -3350,34 +3353,114 @@ function makePdfDoc(d,win,label){
     else if(c.display==="grid") node=grid(el);
     else if(c.display==="flex"&&!/column/.test(c.flexDirection)){const kids=[...el.children].filter(k=>cs(k).display!=="none");
       node={columns:kids.map((k,i)=>({width:i===0?"*":"auto",stack:conv(k).length?conv(k):blocks(k)})),columnGap:12,margin:marg(c)};
-      const bb=px(c.borderBottomWidth);if(bb)node={stack:[node,{canvas:[{type:"line",x1:0,y1:2,x2:540,y2:2,lineWidth:bb*PT,lineColor:pdfColor(c.borderBottomColor)||"#1d211c"}]}],margin:[0,0,0,6]};}
+      const bb=px(c.borderBottomWidth);if(bb)node={stack:[node,{canvas:[{type:"line",x1:0,y1:2,x2:PDFW,y2:2,lineWidth:bb*PT,lineColor:pdfColor(c.borderBottomColor)||"#1d211c"}]}],margin:[0,0,0,6]};}
     else if(el.tagName==="UL"||el.tagName==="OL"){const items=[...el.children].filter(li=>cs(li).display!=="none").map(li=>{const b=blocks(li);return b.length===1?b[0]:{stack:b};});
       node=c.listStyleType==="none"?{stack:items}:{[el.tagName.toLowerCase()]:items,markerColor:"#596057"};node.margin=marg(c);}
     else{const b=blocks(el);if(!b.length)return [];node=box(el,b);if(/^H[1-3]$/.test(el.tagName)){node=Array.isArray(node)?{stack:node}:node;node.headlineLevel=1;}
       const m=marg(c);if(m[1]||m[3]){node=node.table||node.stack||node.text!==undefined||node.columns?{...node,margin:[...(node.margin&&node.margin.length===4?[node.margin[0],node.margin[1]+m[1],node.margin[2],node.margin[3]+m[3]]:m)]}:node;}}
     if(!node)return [];
+    if(el.classList.contains("pgbrk"))node={stack:[node],headlineLevel:2}; // a new page unless already near the top
     // header rule for h2 (border-bottom)
-    if(el.tagName==="H2"){const bb=px(c.borderBottomWidth);if(bb){const col=pdfColor(c.borderBottomColor)||"#7a5424";node={stack:[{...node,margin:[0,0,0,1]},{canvas:[{type:"line",x1:0,y1:0,x2:540,y2:0,lineWidth:bb*PT,lineColor:col}]}],margin:marg(c),headlineLevel:1};}}
+    if(el.tagName==="H2"){const bb=px(c.borderBottomWidth);if(bb){const col=pdfColor(c.borderBottomColor)||"#7a5424";const hb=blocks(el);node={stack:[{stack:hb,margin:[0,0,0,1]},{canvas:[{type:"line",x1:0,y1:0,x2:Math.min(PDFW,el.getBoundingClientRect().width*PT*PDFW/540),y2:0,lineWidth:bb*PT,lineColor:col}]}],margin:marg(c),headlineLevel:1};}}
     return [node];}
   const page=d.querySelector(".page");
   const content=[...page.children].flatMap(conv);
-  return {pageSize:"LETTER",pageMargins:[36,36,36,40],content,defaultStyle:{font:"Roboto",fontSize:9.4,lineHeight:1.1,color:"#1d211c"},
+  return {pageSize:size==="A4"?"A4":"LETTER",pageMargins:[36,36,36,40],content,defaultStyle:{font:"Roboto",fontSize:9.4,lineHeight:1.1,color:"#1d211c"},
     info:{title:label,creator:"Character Ledger"},
-    pageBreakBefore:(node,after)=>node.headlineLevel===1&&after.length===0,
+    pageBreakBefore:(node,after)=>(node.headlineLevel===1&&(after.length===0||(node.startPosition&&node.startPosition.verticalRatio>0.93)))||(node.headlineLevel===2&&node.startPosition&&node.startPosition.verticalRatio>0.3),
     footer:(cur,n)=>({columns:[{text:label,alignment:"left"},{text:`Page ${cur} of ${n}`,alignment:"right"}],margin:[36,12,36,0],fontSize:7,color:"#777777"})};}
-async function makePDF(mode,progress){
+async function makePDF(mode,progress,opt){opt=opt||{};
   await pdfLibs();progress&&progress(1,2);
   const W=720,fr=document.createElement("iframe");fr.setAttribute("aria-hidden","true");fr.tabIndex=-1;
   fr.style.cssText=`position:fixed;left:-12000px;top:0;width:${W}px;height:1000px;border:0`;document.body.appendChild(fr);
   try{
-    const html=sheetHTML(mode,true,false).replace("</style>",`.page{max-width:none!important;width:${W}px!important;margin:0!important;padding:0!important}.tools{display:none!important}.sapp{columns:1!important}.cols{display:block!important}</style>`);
+    const html=(opt.print&&mode==="pc"?printSheetHTML(opt):sheetHTML(mode,true,false)).replace("</style>",`.page{max-width:none!important;width:${W}px!important;margin:0!important;padding:0!important}.tools{display:none!important}.sapp{columns:1!important}${opt.print&&mode==="pc"?"":".cols{display:block!important}"}</style>`);
     await new Promise(r=>{fr.onload=r;fr.srcdoc=html;});const d=fr.contentDocument;try{await d.fonts.ready;}catch(e){}
     const label=`${S.name||"Unnamed"} · ${mode==="pc"?"Character sheet":"Stat block"}`;
-    const doc=makePdfDoc(d,fr.contentWindow,label);progress&&progress(2,2);
+    PDFW=opt.size==="A4"?523:540;let doc;try{doc=makePdfDoc(d,fr.contentWindow,label,opt.size);}finally{PDFW=540;}progress&&progress(2,2);
     return await new Promise((res,rej)=>{try{window.pdfMake.createPdf(doc).getBlob(res);}catch(e){rej(e);}});
   }finally{fr.remove();}
 }
 
+/* ---------- printable sheet: a pencil-friendly layout for paper ----------
+   Page 1 holds everything needed at the table; features, spells, gear and notes follow. Built from the sheet's own
+   sections (rendered with Guidance off), so every number matches the on-screen sheet. */
+const PRINT_CSS=`
+.pp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;border-bottom:2px solid #1d211c;padding-bottom:6px}
+.pp-head h1{font-size:25px}.pp-meta{font-size:11px;text-align:right;color:#1d211c;line-height:1.7}
+.pp-vit{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:9px}
+.pp-vit>div{border:1.5px solid #1d211c;border-radius:3px;text-align:center;padding:4px 2px}
+.pp-vit b{display:block;font:700 21px Spectral,Georgia,serif;line-height:1.15}.pp-vit span{display:block;font-size:10px;color:#40463f}.pp-vit i{display:block;font-style:normal;font-size:9px;color:#596057}
+.pp-hp{display:grid;grid-template-columns:1.5fr 1.2fr 1fr 1fr;gap:6px;margin-top:6px}
+.pp-hp>div{border:1px solid #1d211c;border-radius:3px;padding:3px 7px}
+.pp-k{font-size:9.5px;font-weight:600;color:#40463f;text-transform:uppercase;letter-spacing:.05em}
+.pp-hp .big{font:700 17px Spectral,Georgia,serif}.pp-hp p{margin:2px 0;font-size:11px}
+.pp-cols{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:0 18px}
+.pp-cols td{padding:1.5px 4px;font-size:11.5px}.pp-cols .kv{font-size:11.5px;gap:1px 10px}
+.pp-cols h2{border-bottom:0;padding-bottom:0}
+.pp h2{margin:10px 0 4px}
+.abil{margin-top:2px}
+.rl{border-bottom:1px solid #9b9586;height:21px;color:#ffffff;font-size:10px}
+.pp-small{font-size:10.5px;color:#40463f;margin:3px 0 0}
+.fd{font-size:10.5px}
+.pp-coins{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:4px 0}
+.pp-coins>div{border:1px solid #1d211c;border-radius:3px;padding:3px 6px;font-size:11px;min-height:30px}
+`;
+function printSheetHTML(opt){opt=opt||{};
+  const st=JSON.parse(JSON.stringify(S));st.tips=false;if(opt.pencil){const t0=defaults().track;st.track={...t0,res:{}};}
+  return withState(st,()=>{
+    const s=snapshot(),e=esc,t=S.track,doc=new DOMParser().parseFromString(sheetHTML("pc",true,false),"text/html");
+    const sec=(title,exact)=>{const h=[...doc.querySelectorAll("h2")].find(x=>exact?x.textContent.trim()===title:x.textContent.trim().startsWith(title));if(!h)return "";
+      let out=h.outerHTML,n=h.nextElementSibling;while(n&&n.tagName!=="H2"){if(!n.classList.contains("tip")&&!n.classList.contains("foot"))out+=n.outerHTML;n=n.nextElementSibling;}return out;};
+    const abil=(doc.querySelector(".abil")||{outerHTML:""}).outerHTML;
+    const L=s.TL||s.level,cur=opt.pencil?"":String(curHP(s)),temp=opt.pencil?"":(t.temp?String(t.temp):"");
+    const blank=(v,n)=>v!==""&&v!=null?`<b>${e(v)}</b>`:"_".repeat(n||8);
+    const hdUsed=opt.pencil?0:Math.min(t.hd||0,s.level);
+    const hdHTML=s.multi?s.hd.map(x=>`<p>d${x.die} ${boxes(x.n,opt.pencil?0:Math.min((t.hdd||{})[x.die]||0,x.n))}</p>`).join(""):`<p>${boxes(s.level,hdUsed)}</p>`;
+    const ds=opt.pencil?[0,0]:(t.ds||[0,0]),exh=opt.pencil?0:(t.exh||0);
+    const caster=s.caster&&s.caster.cast?{dc:s.dc,atk:s.atk}:(s.multi&&s.casters&&s.casters[0])||null;
+    const vit=[[s.ac,"Armor Class",s.acNote],[fmt(s.init),"Initiative",""],[s.speed+" ft","Speed",s.moves.length?s.moves.map(([k,v])=>`${k.toLowerCase()} ${v}`).join(", "):""],[fmt(s.pb),"Proficiency",""],[s.passive,"Passive Perception",""],caster?[caster.dc,"Spell save DC",`attack ${fmt(caster.atk)}`]:[s.multi?hdText():s.level+s.die,"Hit Dice",""]];
+    const coins=["pp","gp","ep","sp","cp"].map(k=>`<div><span class="pp-k">${k.toUpperCase()}</span><br>${opt.pencil?"":`<b>${+((S.money||{})[k])||0}</b>`}</div>`).join("");
+    const lines=n=>Array.from({length:n},()=>`<div class="rl">.</div>`).join("");
+    const details=[["Appearance",S.appearance],["Personality",S.personality],["Goals",S.goals],["Secret",S.secret],["Backstory",S.notes]].filter(([,v])=>v&&v.trim());
+    const front=`<div class="pp-head"><div><h1>${e(s.name)}</h1><div class="sub">${e([mixLabel()||s.sp.name,s.multi?classLineText():`${className()} ${s.level}${S.sub?` (${subName()})`:""}`,`${s.b.name} background`,S.align].filter(Boolean).join(" · "))}</div></div>
+<div class="pp-meta">Player: ${S.player?`<b>${e(S.player)}</b>`:"______________"}<br>Level <b>${L}</b> &nbsp; XP ${blank("",10)}</div></div>
+<div class="pp-vit">${vit.map(([v,k,n])=>`<div><b>${e(String(v))}</b><span>${k}</span>${n?`<i>${e(n)}</i>`:""}</div>`).join("")}</div>
+<div class="pp-hp"><div><span class="pp-k">Hit points</span><p>Maximum <span class="big">${s.hp}</span></p><p>Current ${blank(cur,10)} &nbsp; Temp ${blank(temp,6)}</p></div>
+<div><span class="pp-k">Hit Dice ${s.multi?"":`(${s.level}${s.die}, ${plus(s.mods.con)} each)`}</span>${hdHTML}<p class="pp-small">Tick when spent. All return on a long rest.</p></div>
+<div><span class="pp-k">Death saves</span><p>Successes ${boxes(3,ds[0])}</p><p>Failures &nbsp;&nbsp;${boxes(3,ds[1])}</p></div>
+<div><span class="pp-k">Heroic Inspiration</span><p>${boxes(1,opt.pencil?0:(t.insp?1:0))}</p><span class="pp-k">Exhaustion</span><p>${boxes(6,exh)}</p></div></div>
+<h2>Abilities and saving throws</h2>${abil}
+<div class="pp-cols"><div>${sec("Skills",true)}<p class="pp-small">Conditions: ____________________________</p></div><div>${sec("Attacks",true)}${sec("Class resources")}${sec("Limited uses",true)}</div></div>
+${sec("Proficiencies",true)}`;
+    const back=[sec("Weapon properties",true),sec("Class features",true),sec("Species traits"),sec("Feats"),sec("Spells",true),
+      sec("Inventory",true),sec("Other gear",true)||sec("Equipment",true),`<h2>Coins</h2><div class="pp-coins">${coins}</div>`,
+      opt.details!==false?details.map(([k,v])=>`<h2>${k}</h2><p class="pre">${e(v)}</p>`).join("")+`<h2>Notes</h2>${lines(opt.details===false?6:10)}`:`<h2>Notes</h2>${lines(10)}`,
+      opt.spells!==false?sec("Spell descriptions",true):""].filter(Boolean).join("\n");
+    const backHTML=back.replace(/^<h2>/,'<h2 class="pgbrk">');
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${e(s.name)} · Printable sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@600;700&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>${SHEET_CSS}${PRINT_CSS}</style></head><body><div class="page pp">${front}${backHTML}
+<p class="foot">Made with Character Ledger using the 2024 rules. This work includes material from the System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd, licensed under the Creative Commons Attribution 4.0 International License.</p></div></body></html>`;});}
+const PRINTOPT={pencil:true,spells:true,details:true,size:"LETTER"};
+try{Object.assign(PRINTOPT,JSON.parse(localStorage.getItem("ledger_print")||"{}"));}catch(e){}
+function printOpen(){const npc=sheetMode()==="npc",o=PRINTOPT,caster=!npc&&knownSpells().length>0;
+  $("print_body").innerHTML=`<p class="hint" style="margin-top:0">${npc?"A clean copy of this stat block, sized for paper.":"Page one holds everything you need at the table: scores, skills, attacks, spells and hit points. Features, spells, gear and notes follow on the next pages. The Guidance explanations are left off."}</p>
+${npc?"":`<label class="chk"><input type="checkbox" data-po="pencil"${o.pencil?" checked":""}> Leave hit points, spell slots and uses blank for pencil</label>
+<p class="hint" style="margin:0 0 .4rem 1.45rem">Untick to print where the character is right now (current HP, slots used and so on).</p>
+${caster?`<label class="chk"><input type="checkbox" data-po="spells"${o.spells?" checked":""}> Include full spell descriptions at the end</label>`:""}
+<label class="chk"><input type="checkbox" data-po="details"${o.details?" checked":""}> Include appearance, personality, goals and backstory</label>`}
+<label for="print_size" style="margin-top:.6rem">Paper size</label><select id="print_size" style="max-width:16rem"><option value="LETTER"${o.size!=="A4"?" selected":""}>Letter (8.5 × 11 in)</option><option value="A4"${o.size==="A4"?" selected":""}>A4</option></select>`;
+  $("print_status").textContent="";const d=$("printbox");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");}
+async function printMake(){const b=$("print_go"),st=$("print_status"),npc=sheetMode()==="npc";if(b.disabled)return;
+  $("print_body").querySelectorAll("[data-po]").forEach(x=>PRINTOPT[x.dataset.po]=x.checked);PRINTOPT.size=$("print_size").value==="A4"?"A4":"LETTER";
+  try{localStorage.setItem("ledger_print",JSON.stringify(PRINTOPT));}catch(e){}
+  b.disabled=true;st.textContent="Making the PDF…";
+  try{const blob=await makePDF(npc?"npc":"pc",i=>{st.textContent=i===1?"Laying out the pages…":"Writing the PDF…";},{...PRINTOPT,print:true});
+    const name=`${sheetSlug()}-${npc?"stat-block":"printable"}.pdf`,r=await offerFile(name,new File([blob],name,{type:"application/pdf"}),st);
+    if(r==="saved")st.textContent=`Saved ${name}. Open it and print${PRINTOPT.size==="A4"?" on A4":""} at 100% (actual size).`;}
+  catch(e){st.textContent="The PDF couldn't be made. It needs an internet connection the first time.";}
+  finally{b.disabled=false;}}
 const sheetSlug=()=>(S.name||"character").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"character";
 let pdfBusy=false;
 /* Share: a PDF of the sheet plus the character file, through the phone's share sheet (Messages, Save to Files…).
@@ -4633,6 +4716,7 @@ ${line("role","Once was",IDEA.role)}${line("look","Looks",IDEA.look+".")}${line(
 function ideaOpen(){ideaNew();const d=$("idea");if(d.showModal&&!d.open)d.showModal();else d.setAttribute("open","");d.scrollTop=0;}
 function ideaClose(){const d=$("idea");if(d.close)d.close();else d.removeAttribute("open");}
 function ideaDetails(){return {name:IDEA.name,title:IDEA.role,appearance:IDEA.look+".",personality:`${IDEA.pers}. Quirk: ${IDEA.quirk}.`,goals:IDEA.goal+".",secret:IDEA.secret+".",notes:IDEA.story+"."};}
+$("print_btn").addEventListener("click",printOpen);$("print_go").addEventListener("click",printMake);$("print_x").addEventListener("click",()=>$("printbox").close());$("printbox").addEventListener("click",e=>{if(e.target===$("printbox"))$("printbox").close();});
 /* ----- browse feats ----- */
 let FEATQ="";
 function featListHTML(){const e=esc,q=FEATQ.trim().toLowerCase(),have=takenFeats(-1).filter(Boolean),slots=asiSlots(S.level),next=C().asi?baseC().asi.find(l=>l>S.level):null;
