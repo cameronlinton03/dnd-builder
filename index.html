@@ -2231,6 +2231,8 @@ function playAdjust(s){const t=S.track,x=2*(t.exh||0),cond=t.cond||[];
   const o={...s,exhPen:x};if(x){o.saves=s.saves.map(v=>({...v,bonus:v.bonus-x}));o.skills=s.skills.map(v=>({...v,bonus:v.bonus-x}));o.attacks=s.attacks.map(a=>({...a,hit:a.hit-x}));o.init=s.init-x;if(s.atk!=null)o.atk=s.atk-x;if(s.casters)o.casters=s.casters.map(k=>({...k,atk:k.atk-x}));}
   o.speedBase=s.speed;o.speed=cond.some(c=>SPEED0.includes(c))?0:Math.max(0,s.speed-5*(t.exh||0));return o;}
 const boxes=(n,used,act,extra)=>`<span class="boxes">${Array.from({length:n},(_,i)=>`<span class="box${i<used?" x":""}"${act?` data-act="${act}" data-i="${i}"${extra||""} role="button" tabindex="0" aria-label="${i<used?"Used, tap to restore":"Available, tap to mark used"}"`:""}></span>`).join("")}</span>`;
+function slotStripHTML(live){const st=slotState();if(!st.levels.length)return "";
+  return `<div class="prow2 slotstrip"><div class="lblx">Spell slots</div><div class="sslots">${st.levels.map(r=>`<span><b>${r.pact?`Pact (lv ${r.lvl})`:ord(r.lvl)}</b> ${boxes(r.max,r.used,live?"slot":"",` data-l="${r.lvl}"${r.pact?' data-pact="1"':""}`)}</span>`).join("")}</div><div class="muted small">${live?"Tap a box when you use a slot. ":"Tick a box when you use a slot. "}${st.mixed?"Pact slots return on a short or long rest; the others on a long rest.":st.pact?"They return on a short or long rest.":"They return on a long rest."}</div></div>`;}
 function playPanelHTML(s,live){
   const t=S.track,max=s.hp,cur=curHP(s),temp=t.temp||0,ds=t.ds||[0,0],hdUsed=Math.min(t.hd||0,s.level),e=esc,cond=t.cond||[],exh=t.exh||0;
   const hdBox=s.multi?`<div class="hdbox"><div class="lblx">Hit Dice (${plus(s.mods.con)} each)</div>${s.hd.map(x=>{const u=Math.min((t.hdd||{})[x.die]||0,x.n);return `<div class="dsrow"><span>d${x.die}</span>${boxes(x.n,u,live?"hd":"",` data-die="${x.die}"`)}</div>`;}).join("")}<div class="muted small">${s.hd.map(x=>`${x.n-Math.min((t.hdd||{})[x.die]||0,x.n)} of ${x.n} d${x.die}`).join(", ")} left. Spend them on a short rest; all come back on a long rest.</div></div>`:"";
@@ -2243,6 +2245,7 @@ function playPanelHTML(s,live){
   ${s.multi?hdBox:`<div class="hdbox"><div class="lblx">Hit Dice (${s.die} ${plus(s.mods.con)})</div>${boxes(s.level,hdUsed,live?"hd":"")}<div class="muted small">${s.level-hdUsed} of ${s.level} left. Spend them on a short rest; all come back on a long rest.</div></div>`}
   <div class="inbox"><div class="lblx">Heroic Inspiration</div>${live?`<button type="button" class="insp${t.insp?" on":""}" data-act="insp" aria-pressed="${!!t.insp}">${t.insp?"★ Inspired":"☆ Not inspired"}</button>`:`<span class="boxes"><span class="box${t.insp?" x":""}"></span></span>`}<div class="muted small">Spend it for advantage on a d20 test.</div></div>
   </div>
+  ${slotStripHTML(live)}
   <div class="prow2"><div class="lblx">Conditions</div><div class="conds">${Object.keys(CONDITIONS).map(c=>live?`<button type="button" class="cond${cond.includes(c)?" on":""}" data-act="cond" data-c="${c}" aria-pressed="${cond.includes(c)}">${c}</button>`:cond.includes(c)?`<b>${c}</b>`:"").filter(Boolean).join(live?"":", ")||(!live?'<span class="muted">None</span>':"")}</div>
    <div class="exh"><span class="lblx">Exhaustion</span>${live?btn("exh","−",' data-d="-1" aria-label="Remove a level of Exhaustion"'):""}<b>${exh}</b>${live?btn("exh","+",' data-d="1" aria-label="Add a level of Exhaustion"'):""}<span class="muted small">${exh?`−${2*exh} to d20 tests, −${5*exh} ft speed (applied below)`:"of 6"}</span></div></div>
   ${cond.length||exh?`<div class="condtxt">${cond.map(c=>`<p><b>${c}.</b> ${e(CONDITIONS[c])}</p>`).join("")}${exh?`<p><b>Exhaustion ${exh}.</b> ${e(EXH_TXT)}</p>`:""}</div>`:""}
@@ -2445,7 +2448,7 @@ function sheetHTML(mode,forPreview,live){
   if(s.multi){spellLines.length=0;s.casters.forEach(k=>spellLines.push(`<dt>${e(k.cls)} spells</dt><dd>save DC ${k.dc}, attack ${fmt(k.atk)} (${AF[k.cast]})${k.type==="third"?`; ${thirdCantrips(k.level)+(k.cls==="Rogue"?1:0)} Wizard cantrips, ${THIRD_PREP[k.level-3]} prepared Wizard spells`:""}</dd>`));}
   const st=slotsAllText(s.slots); if(st) spellLines.push(`<dt>Spell slots</dt><dd>${e(st)}</dd>`);
   if(s.multi&&s.slots.casterLevel) spellLines.push(`<dt>Combined caster level</dt><dd>${s.slots.casterLevel} (full-caster levels, plus half of Paladin and Ranger rounded up, plus a third of Eldritch Knight and Arcane Trickster rounded down)</dd>`);
-  if(!s.multi&&s.caster.cast&&s.caster.type!=="third"&&!s.c.custom) spellLines.push(`<dt>Spell list</dt><dd>${e(s.cls)} spells (listed in the Spells section below)</dd>`);
+  if(!s.multi&&s.caster.cast&&s.caster.type!=="third"&&!s.c.custom) spellLines.push(`<dt>Spell list</dt><dd>${e(s.cls)} spells (see Spells)</dd>`);
   if(!s.multi&&s.caster.type==="third") spellLines.push(s.level<3?`<dt>Spells</dt><dd>${e(s.sub)} spellcasting starts at level 3</dd>`:`<dt>Spells</dt><dd>${thirdCantrips(s.level)+(S.sub==="Arcane Trickster"?1:0)} Wizard cantrips${S.sub==="Arcane Trickster"?" (including Mage Hand)":""}, ${THIRD_PREP[s.level-3]} prepared Wizard spells</dd>`);
   const res=s.scale.map(([k,v])=>`<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join("");
   const ysNow=mode==="pc"?youModel(s.level):null;
@@ -3338,7 +3341,8 @@ function makePdfDoc(d,win,label,size){
   function table(el){
     const rows=[...el.querySelectorAll(":scope>tbody>tr,:scope>thead>tr,:scope>tr")];if(!rows.length)return null;
     const ref=rows.reduce((a,r)=>r.cells.length>a.cells.length?r:a,rows[0]),W=el.getBoundingClientRect().width;
-    const widths=[...ref.cells].map(td=>td.getBoundingClientRect().width/W*PDFW*Math.min(1,W/720));
+    const p00=rows[0].cells[0]?cs(rows[0].cells[0]):null,pad2=p00?2*px(p00.paddingLeft)*PT:4;
+    const widths=[...ref.cells].map(td=>Math.max(8,td.getBoundingClientRect().width/W*PDFW*Math.min(1,W/720)-pad2));
     const body=rows.map(tr=>{const r=[];[...tr.cells].forEach(td=>{const c=cs(td),cell={stack:blocks(td)};if(c.textAlign==="right")cell.alignment="right";const bg=pdfColor(c.backgroundColor)||pdfColor(cs(tr).backgroundColor);if(bg)cell.fillColor=bg;
       if(td.colSpan>1){cell.colSpan=td.colSpan;r.push(cell);for(let k=1;k<td.colSpan;k++)r.push({});}else r.push(cell);});while(r.length<widths.length)r.push({text:""});return r;});
     const line=i=>{const tr=rows[i-1];if(!tr||!tr.cells[0])return 0;return px(cs(tr.cells[0]).borderBottomWidth)*PT;};
@@ -3411,6 +3415,7 @@ const PRINT_CSS=`
 .pp-small{font-size:10.5px;color:#40463f;margin:3px 0 0}
 .fd{font-size:10.5px}
 .pp select,.pp input,.pp button{display:none!important}.pp .tip{font-size:10.5px;margin:4px 0}.pp .turn{grid-template-columns:1fr 1fr}
+.pp-slots{border:1px solid #1d211c;border-radius:3px;padding:3px 7px;margin-top:6px}.pp-slots .lblx{font-size:9.5px;font-weight:600;color:#40463f;text-transform:uppercase;letter-spacing:.05em}.pp-slots .sslots{margin:2px 0}
 .pp-coins{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:4px 0}
 .pp-coins>div{border:1px solid #1d211c;border-radius:3px;padding:3px 6px;font-size:11px;min-height:30px}
 `;
@@ -3438,12 +3443,13 @@ function printSheetHTML(opt){opt=opt||{};
 <div><span class="pp-k">Hit Dice ${s.multi?"":`(${s.level}${s.die}, ${plus(s.mods.con)} each)`}</span>${hdHTML}<p class="pp-small">Tick when spent. All return on a long rest.</p></div>
 <div><span class="pp-k">Death saves</span><p>Successes ${boxes(3,ds[0])}</p><p>Failures &nbsp;&nbsp;${boxes(3,ds[1])}</p></div>
 <div><span class="pp-k">Heroic Inspiration</span><p>${boxes(1,opt.pencil?0:(t.insp?1:0))}</p><span class="pp-k">Exhaustion</span><p>${boxes(6,exh)}</p></div></div>
+${slotStripHTML(false).replace('class="prow2 slotstrip"','class="pp-slots"')}
 <h2>Abilities and saving throws</h2>${abil}
 <div class="pp-cols"><div>${sec("Skills",true)}<p class="pp-small">Conditions: ____________________________</p></div><div>${sec("Attacks",true)}${sec("Class resources")}${sec("Limited uses",true)}</div></div>
 ${sec("Proficiencies",true)}`;
     const tips=opt.guide?[...doc.querySelectorAll(".tip")].map(x=>x.outerHTML).join(""):"";
     const guide=opt.guide?[`<h2>How to read this sheet</h2>${tips}`,sec("On your turn",true)].join(""):"";
-    const back=[guide,sec("Weapon properties",true),sec("Class features",true),sec("Species traits"),sec("Feats"),sec("Spells",true),
+    const back=[guide,sec("Weapon properties",true),sec("Class features",true),sec("Species traits"),sec("Feats"),sec("Spells",true).replace(/<div class="sslots">[\s\S]*?<\/div><p class="muted"[^>]*>[\s\S]*?<\/p>/,""),
       sec("Inventory",true),sec("Other gear",true)||sec("Equipment",true),`<h2>Coins</h2><div class="pp-coins">${coins}</div>`,
       opt.details!==false?details.map(([k,v])=>`<h2>${k}</h2><p class="pre">${e(v)}</p>`).join("")+`<h2>Notes</h2>${lines(opt.details===false?6:10)}`:`<h2>Notes</h2>${lines(10)}`,
       opt.levelup?sec("Levelling up",true):"",
