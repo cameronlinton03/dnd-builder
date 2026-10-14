@@ -2266,7 +2266,7 @@ function masteryHTML(s){const w=[...new Set(s.attacks.filter(a=>!a.unarmed).map(
   const topDC=a=>8+s.pb+Math.max(s.mods.str,s.mods.dex);
   if(!props.size&&!ms.length&&!masteryCount())return "";
   let h=`<h2>Weapon properties${ms.length?" and mastery":""}</h2>`;
-  if(masteryCount()) h+=`<p class="small" style="margin:0 0 4px">You can use the mastery property of <b>${mp.length?mp.map(esc).join(", "):"no weapons yet"}</b> (${masteryCount()} kinds; choose in step 7).</p>`;
+  if(masteryCount()) h+=`<p class="small" style="margin:0 0 4px">You can use the mastery property of <b>${mp.length?mp.map(esc).join(", "):"no weapons yet"}</b> (${masteryCount()} kinds).</p>`;
   h+=`<dl class="kv small">${[...props].sort().map(p=>`<dt>${p}</dt><dd>${esc(PROP_TXT[p])}</dd>`).join("")}${ms.map(k=>`<dt>${k} <span class="muted">(mastery)</span></dt><dd>${esc(MASTERY_TXT[k])}${k==="Topple"?` Save DC ${topDC()} (8 + your proficiency bonus + the attack's ability modifier).`:""}</dd>`).join("")}</dl>`;
   return h;}
 function inventorySheetHTML(s,live){const items=S.items||[],mo=S.money||{};const coins=["pp","gp","ep","sp","cp"].filter(k=>+mo[k]);
@@ -2436,6 +2436,16 @@ function mcNextHTML(s){if(s.TL>=20)return "<p>This character is level 20. There 
     const b=g.map(it=>atClassLevel(x,L,()=>withClass(x,()=>gainBlurb(it,L,cs))));
     h+=`<div class="lv"><b>${e(x.primary?className():x.cls)} ${L}</b><ul><li>Hit points +${hp} (or roll d${die}${hp-(Math.ceil(die/2)+1)?` and add ${hp-(Math.ceil(die/2)+1)}`:""})</li>${g.map((it,i)=>`<li>${e(it)}${b[i]?`<span class="fd">${fdText(b[i])}</span>`:""}</li>`).join("")}</ul></div>`;});
   return h;}
+// the finished sheet leaves out the builder's "do this in step N" pointers (the levelling-up guide keeps them)
+function sheetTidy(t){return String(t||"").replace(/\s*Set this in step \d\.?/g,"").replace(/Pick them in step \d; their effects/,"Their effects").replace(/ \(pick in the Spells step\)/g,"").trim();}
+const gearShown=()=>String(S.gear||"").split("\n").filter(l=>!/^Starting at level \d+ \(DM's call\)/.test(l)).join("\n").trim();
+function subChosenFor(x){const e0=x.e;if(e0&&!e0.primary){const m=(S.mc||[])[e0.idx];return !!(m&&m.sub);}return !!S.sub;}
+function asiChosenText(x){try{const e0=x.e;let asi,feats,slots;
+  if(e0&&!e0.primary){const m=(S.mc||[])[e0.idx];if(!m)return "";asi=m.asi||[];feats=m.asiFeat||[];slots=withClass(e0,()=>asiSlots(m.level));}
+  else{asi=S.asi||[];feats=S.asiFeat||[];slots=asiSlots(S.level);}
+  const i=slots.indexOf(x.l);if(i<0)return "";const p=asi[i]||["",""];
+  if(p[0]===""){const f=(feats[i]||{}).f;return f?`Took the ${f} feat (see Feats).`:"Not chosen yet.";}
+  const b=p[1]||p[0];return b===p[0]?`+2 ${AF[p[0]]}.`:`+1 ${AF[p[0]]} and +1 ${AF[b]}.`;}catch(e){return "";}}
 function sheetHTML(mode,forPreview,live){
   if(live===undefined)live=forPreview;live=live&&mode==="pc";
   const s0=snapshot(),s=mode==="pc"?playAdjust(s0):s0,e=esc;
@@ -2443,20 +2453,26 @@ function sheetHTML(mode,forPreview,live){
   const idLine=[mixLabel()||s.sp.name,clsLine,`${s.b.name} background`,S.align].filter(Boolean).map(e).join(" · ");
   const abil=`<div class="abil">${AB.map(a=>{const sv=s.saves.find(x=>x.a===a);return `<div class="ab"><div class="n">${AF[a]}</div><div class="m">${fmt(s.mods[a])}</div><div class="s">${s.scores[a]}</div>${mode==="pc"?`<div class="sv"><span class="dot${sv.prof?" on":""}"></span>Save ${fmt(sv.bonus)}</div>`:""}</div>`;}).join("")}</div>`;
   const atkRows=s.attacks.map(a=>`<tr><td>${e(a.name)}${a.prof===false?' <span class="muted">(not proficient)</span>':""}</td><td class="num">${fmt(a.hit)}</td><td>${e(a.dmg)} ${e(a.type)}${a.vers?`<br><span class="muted">${e(a.vers)} two-handed</span>`:""}</td><td class="muted">${e(a.props.join(", "))}${mode==="pc"&&s.c.mastery&&a.mastery?`${a.props.length?"; ":""}mastery: ${e(a.mastery)}`:""}</td></tr>`).join("");
+  const cantripRows=mode==="pc"?cantripAttacks(s).map(c=>`<tr data-sp="${e(c.n)}|${c.ab}"><td>${e(c.n)} <span class="muted">(cantrip)</span></td><td class="num">${e(c.hit)}</td><td>${e(c.dmg)}</td><td class="muted">${e(c.note)}</td></tr>`).join(""):"";
   const spellLines=[];
   if(s.caster.cast) spellLines.push(`<dt>Spell save DC</dt><dd>${s.dc} (${AF[s.caster.cast]})</dd><dt>Spell attack</dt><dd>${fmt(s.atk)} (${AF[s.caster.cast]})</dd>`);
   if(s.multi){spellLines.length=0;s.casters.forEach(k=>spellLines.push(`<dt>${e(k.cls)} spells</dt><dd>save DC ${k.dc}, attack ${fmt(k.atk)} (${AF[k.cast]})${k.type==="third"?`; ${thirdCantrips(k.level)+(k.cls==="Rogue"?1:0)} Wizard cantrips, ${THIRD_PREP[k.level-3]} prepared Wizard spells`:""}</dd>`));}
-  const st=slotsAllText(s.slots); if(st) spellLines.push(`<dt>Spell slots</dt><dd>${e(st)}</dd>`);
+  const st=slotsAllText(s.slots); if(st&&mode!=="pc") spellLines.push(`<dt>Spell slots</dt><dd>${e(st)}</dd>`); // the PC sheet has tick boxes beside hit points
   if(s.multi&&s.slots.casterLevel) spellLines.push(`<dt>Combined caster level</dt><dd>${s.slots.casterLevel} (full-caster levels, plus half of Paladin and Ranger rounded up, plus a third of Eldritch Knight and Arcane Trickster rounded down)</dd>`);
   if(!s.multi&&s.caster.cast&&s.caster.type!=="third"&&!s.c.custom) spellLines.push(`<dt>Spell list</dt><dd>${e(s.cls)} spells (see Spells)</dd>`);
   if(!s.multi&&s.caster.type==="third") spellLines.push(s.level<3?`<dt>Spells</dt><dd>${e(s.sub)} spellcasting starts at level 3</dd>`:`<dt>Spells</dt><dd>${thirdCantrips(s.level)+(S.sub==="Arcane Trickster"?1:0)} Wizard cantrips${S.sub==="Arcane Trickster"?" (including Mage Hand)":""}, ${THIRD_PREP[s.level-3]} prepared Wizard spells</dd>`);
-  const res=s.scale.map(([k,v])=>`<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join("");
+  // anything already tracked with boxes under Limited uses isn't repeated here
+  const nrm=t=>String(t).toLowerCase().replace(/\(.*?\)/g,"").replace(/\b(pool|uses)\b/g,"").replace(/s\b/g,"").replace(/\s+/g," ").trim();
+  const tracked=new Set(mode==="pc"?playResources(s).map(r=>nrm(r.name)):[]),clsPre=new RegExp("^("+Object.keys(CLASSES).join("|")+") ");
+  const res=s.scale.filter(([k])=>!tracked.has(nrm(String(k).replace(clsPre,"")))).map(([k,v])=>`<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join("");
   const ysNow=mode==="pc"?youModel(s.level):null;
-  const csC={},had=new Set();const featsByLevel=s.featuresSoFar.map(x=>{let b="";if(ysNow){if(x.e){const cs=csC[x.e.idx]||(csC[x.e.idx]=ctxSnap(x.e,ysNow));b=MC_DUP[x.f]&&had.has(x.f)?MC_DUP[x.f](s):withClass(x.e,()=>featureBlurb(x.f,x.e.level,cs)||gainBlurb(x.f,x.l,cs));}else b=featureBlurb(x.f,s.level,ysNow)||gainBlurb(x.f,x.l,ysNow);}
+  const csC={},had=new Set();const featsByLevel=s.featuresSoFar.map(x=>{if(mode==="pc"&&/ subclass$/.test(x.f)&&subChosenFor(x))return "";let b="";if(ysNow){if(x.e){const cs=csC[x.e.idx]||(csC[x.e.idx]=ctxSnap(x.e,ysNow));b=MC_DUP[x.f]&&had.has(x.f)?MC_DUP[x.f](s):withClass(x.e,()=>featureBlurb(x.f,x.e.level,cs)||gainBlurb(x.f,x.l,cs));}else b=featureBlurb(x.f,s.level,ysNow)||gainBlurb(x.f,x.l,ysNow);}
     had.add(x.f);
+    if(mode==="pc"){if(x.f==="Ability Score Improvement"){const c=asiChosenText(x);if(c)b=c;}if(x.f==="Scholar"){const sk=s.skills.filter(k=>k.exp&&["Arcana","History","Investigation","Medicine","Nature","Religion"].includes(k.name)).map(k=>k.name);if(sk.length)b=`Expertise in ${sk.join(" and ")}.`;}b=sheetTidy(b);}
     return `<li><span class="muted">${s.multi?`${e(x.cls||s.cls)} ${x.l}`:`Level ${x.l}`}:</span> <b>${e(x.f)}</b>${b?`<span class="fd">${fdText(b)}</span>`:""}</li>`;}).join("");
-  const featList=s.feats.map(n=>{const x=s.aFeats.find(y=>y.f===n&&GEN_FEATS[n]);return `<li><b>${e(n)}</b>${x&&featAb(x)?` <span class="muted">(+1 ${AF[featAb(x)]}${x.sk?`, ${e(x.sk)}`:""}${x.ex?`, Expertise: ${e(x.ex)}`:""})</span>`:""}: ${e(featDesc(n))}</li>`;}).join("")+s.invs.map(o=>`<li><b>${e(o.n)}</b> <span class="muted">(Eldritch Invocation${o.n==="Pact of the Blade"&&s.blade?`, ${e(s.blade)}`:o.x?`, ${e(o.x)}`:""})</span>: ${e(INVOCATIONS[o.n].sum)}</li>`).join("");
-  const spTraits=s.spTraits.map(t=>`<li>${e(t)}</li>`).join("");
+  const featList=s.feats.map(n=>{const x=s.aFeats.find(y=>y.f===n&&GEN_FEATS[n]);return `<li><b>${e(n)}</b>${x&&featAb(x)?` <span class="muted">(+1 ${AF[featAb(x)]}${x.sk?`, ${e(x.sk)}`:""}${x.ex?`, Expertise: ${e(x.ex)}`:""})</span>`:""}: ${e(sheetTidy(featDesc(n)))}</li>`;}).join("")+s.invs.map(o=>`<li><b>${e(o.n)}</b> <span class="muted">(Eldritch Invocation${o.n==="Pact of the Blade"&&s.blade?`, ${e(s.blade)}`:o.x?`, ${e(o.x)}`:""})</span>: ${e(sheetTidy(INVOCATIONS[o.n].sum))}</li>`).join("");
+  const spChosen=(SPECIES[S.sp]&&SPECIES[S.sp].skillPick?[S.keen]:(S.spSkills||[])).filter(Boolean);
+  const spTraits=s.spTraits.map(t=>`<li>${e(mode==="pc"?sheetTidy(t.replace(/proficiency in your chosen skill/,spChosen.length?`proficiency in ${spChosen.join(" and ")}`:"proficiency in your chosen skill").replace(/^Versatile: an extra origin feat$/,()=>`Versatile: an extra origin feat (${humanFeat()})`)):t)}</li>`).join("");
   const senses=[s.blind?`Blindsight ${s.blind} ft`:"",s.sp.dark?`Darkvision ${s.sp.dark} ft`:"",...s.moreSenses,`Passive Perception ${s.passive}`].filter(Boolean).join(", ");
   const speedTxt=`${s.speed} ft${s.moves.length?", "+s.moves.map(([k,v])=>`${k.toLowerCase()} ${v} ft`).join(", "):""}${s.speedNotes.length?` (${s.speedNotes.join(", ")})`:""}`;
   const breathTxt=s.breath?`<p><b>Breath Weapon.</b> 15-ft cone or 30-ft line. Dexterity save DC ${s.breath.dc}, ${s.breath.dmg} ${s.breath.type} damage (half on a success). ${s.breath.uses} uses per long rest.</p>`:"";
@@ -2484,10 +2500,9 @@ function sheetHTML(mode,forPreview,live){
 ${tipsHTML(s,"vitals")}
 ${playPanelHTML(s,live)}
 ${resourcesHTML(s,live)}
-${S.tips!==false?turnHTML(s,live):""}
 <h2>Abilities and saving throws</h2>${abil}${s.aura?`<p class="muted" style="margin:4px 0 0">Saves include Aura of Protection (${fmt(s.aura)}).</p>`:""}${tipsHTML(s,"abil")}
 <div class="cols"><div>
-<h2>Attacks</h2><table><tr><th>Weapon</th><th style="text-align:right">Hit</th><th>Damage</th><th>Notes</th></tr>${atkRows}</table>${tipsHTML(s,"attacks")}
+<h2>Attacks</h2><table><tr><th>${cantripRows?"Weapon or cantrip":"Weapon"}</th><th style="text-align:right">Hit</th><th>Damage</th><th>Notes</th></tr>${atkRows}${cantripRows}</table>${tipsHTML(s,"attacks")}
 ${masteryHTML(s)}
 ${s.breath?`<div class="act" style="margin-top:6px">${breathTxt}</div>`:""}
 ${spellLines.length||res?`<h2>Class resources${spellLines.length?" and magic":""}</h2><dl class="kv">${spellLines.join("")}${res}</dl>`:""}
@@ -2496,12 +2511,13 @@ ${spellLines.length||res?`<h2>Class resources${spellLines.length?" and magic":""
 <h2>Skills</h2><table>${skillRows}</table>
 <p class="muted" style="font-size:10.5px;margin:4px 0 0"><span class="dot on"></span>proficient &nbsp; <span class="dot x"></span>expertise${s.joat?" &nbsp; others include Jack of All Trades":""}</p>${tipsHTML(s,"skills")}
 </div></div>
+${S.tips!==false?turnHTML(s,live):""}
 ${spellSheetPC(s,live)}
 <h2>Class features</h2><ul>${featsByLevel}</ul>
 <h2>Species traits (${e(mixLabel()?`${mixLabel()}, using ${s.sp.name} traits`:s.sp.name)})</h2><ul>${spTraits}</ul>
 <h2>${s.invs.length?"Feats and invocations":"Feats"}</h2><ul>${featList}</ul><p class="muted" style="margin:.3rem 0 0">Carrying capacity ${carryOf(s)} lb; push, drag or lift ${carryOf(s)*2} lb.</p>
 ${inventorySheetHTML(s,live)}
-${S.gear?`<h2>${(S.items||[]).length?"Other gear":"Equipment"}</h2><p class="pre">${e(S.gear)}</p>`:""}
+${gearShown()?`<h2>${(S.items||[]).length?"Other gear":"Equipment"}</h2><p class="pre">${e(gearShown())}</p>`:""}
 ${[["Appearance",S.appearance],["Personality",S.personality],["Goals",S.goals],["Secret",S.secret],["Backstory",S.notes]].filter(([,v])=>v&&v.trim()).map(([k,v])=>`<h2>${k}</h2><p class="pre">${e(v)}</p>`).join("")}
 <h2>Levelling up</h2>
 ${S.tips===false?"":`<div class="how"><b>Each time you gain a level</b><ol>
@@ -3079,6 +3095,14 @@ function spellDmgBonus(k,s,sp){if(!sp.dm)return 0;let b=0;
   if(lvlIn("Wizard")>=10&&subIn("Wizard")==="Evoker"&&sp.s==="Evocation"&&sp.c.includes("Wizard")) b+=s.mods.int;
   if(lvlIn("Warlock")&&sp.l===0&&invChosen().some(o=>o.n==="Agonizing Blast"&&(o.x||"Eldritch Blast")===k.n)) b+=s.mods.cha;
   return b;}
+// damaging cantrips, for the Attacks table: hit bonus (or save DC), damage at this level, and range
+function cantripAttacks(s){let kn=[];try{kn=knownSpells();}catch(e){return [];}const seen=new Set(),out=[];
+  kn.forEach(k=>{const sp=SP_BY[k.n];if(!sp||sp.l!==0||!sp.dm||seen.has(k.n))return;seen.add(k.n);
+    const ab=k.ab||(s.caster&&s.caster.cast)||"int",dc=8+s.pb+s.mods[ab]+(ab===(s.caster&&s.caster.cast)?(s.itemSpellDC||0):0),atk=s.pb+s.mods[ab]+(s.itemSpellAtk||0)-(s.exhPen||0);
+    let d=cantripDice(sp,s.TL||s.level);const b=spellDmgBonus(k,s,sp);if(b)d=/ each$/.test(d)?d.replace(/ each$/,`${fmt(b)} each`):`${d}${fmt(b)}`;
+    const sv=sp.sv?`${cap(String(sp.sv))} save`:"";
+    out.push({n:k.n,ab,hit:sp.a?fmt(atk):sp.sv?`DC ${dc}`:"",dmg:`${d} ${sp.dm[0].toLowerCase()}${sp.dm2?` + ${sp.dm2[1]} ${sp.dm2[0].toLowerCase()}`:""}`,note:[sv,sp.r].filter(Boolean).join("; ")});});
+  return out;}
 function spellLine(k,s){ // effect summary with this character's numbers
   const sp=SP_BY[k.n],mods=s.mods,ab=k.ab||"int",dc=8+s.pb+mods[ab]+(ab===(s.caster&&s.caster.cast)?(s.itemSpellDC||0):0),atk=s.pb+mods[ab]+(s.itemSpellAtk||0)-(s.exhPen||0),bits=[];
   if(sp.a) bits.push(`${fmt(atk)} to hit`);
@@ -3432,13 +3456,13 @@ function printSheetHTML(opt){opt=opt||{};
     const hdHTML=s.multi?s.hd.map(x=>`<p>d${x.die} ${boxes(x.n,opt.pencil?0:Math.min((t.hdd||{})[x.die]||0,x.n))}</p>`).join(""):`<p>${boxes(s.level,hdUsed)}</p>`;
     const ds=opt.pencil?[0,0]:(t.ds||[0,0]),exh=opt.pencil?0:(t.exh||0);
     const caster=s.caster&&s.caster.cast?{dc:s.dc,atk:s.atk}:(s.multi&&s.casters&&s.casters[0])||null;
-    const vit=[[s.ac,"Armor Class",s.acNote],[fmt(s.init),"Initiative",""],[s.speed+" ft","Speed",s.moves.length?s.moves.map(([k,v])=>`${k.toLowerCase()} ${v}`).join(", "):""],[fmt(s.pb),"Proficiency",""],[s.passive,"Passive Perception",""],caster?[caster.dc,"Spell save DC",`attack ${fmt(caster.atk)}`]:[s.multi?hdText():s.level+s.die,"Hit Dice",""]];
+    const vit=[[s.ac,"Armor Class",s.acNote],[fmt(s.init),"Initiative",""],[s.speed+" ft","Speed",s.moves.length?s.moves.map(([k,v])=>`${k.toLowerCase()} ${v}`).join(", "):""],[fmt(s.pb),"Proficiency",""],[s.passive,"Passive Perception",""],caster?[caster.dc,"Spell save DC",`attack ${fmt(caster.atk)}`]:null].filter(Boolean);
     const coins=["pp","gp","ep","sp","cp"].map(k=>`<div><span class="pp-k">${k.toUpperCase()}</span><br>${opt.pencil?"":`<b>${+((S.money||{})[k])||0}</b>`}</div>`).join("");
     const lines=n=>Array.from({length:n},()=>`<div class="rl">.</div>`).join("");
     const details=[["Appearance",S.appearance],["Personality",S.personality],["Goals",S.goals],["Secret",S.secret],["Backstory",S.notes]].filter(([,v])=>v&&v.trim());
     const front=`<div class="pp-head"><div><h1>${e(s.name)}</h1><div class="sub">${e([mixLabel()||s.sp.name,s.multi?classLineText():`${className()} ${s.level}${S.sub?` (${subName()})`:""}`,`${s.b.name} background`,S.align].filter(Boolean).join(" · "))}</div></div>
 <div class="pp-meta">Player: ${S.player?`<b>${e(S.player)}</b>`:"______________"}<br>Level <b>${L}</b> &nbsp; XP ${blank("",10)}</div></div>
-<div class="pp-vit">${vit.map(([v,k,n])=>`<div><b>${e(String(v))}</b><span>${k}</span>${n?`<i>${e(n)}</i>`:""}</div>`).join("")}</div>
+<div class="pp-vit" style="grid-template-columns:repeat(${vit.length},1fr)">${vit.map(([v,k,n])=>`<div><b>${e(String(v))}</b><span>${k}</span>${n?`<i>${e(n)}</i>`:""}</div>`).join("")}</div>
 <div class="pp-hp"><div><span class="pp-k">Hit points</span><p>Maximum <span class="big">${s.hp}</span></p><p>Current ${blank(cur,10)} &nbsp; Temp ${blank(temp,6)}</p></div>
 <div><span class="pp-k">Hit Dice ${s.multi?"":`(${s.level}${s.die}, ${plus(s.mods.con)} each)`}</span>${hdHTML}<p class="pp-small">Tick when spent. All return on a long rest.</p></div>
 <div><span class="pp-k">Death saves</span><p>Successes ${boxes(3,ds[0])}</p><p>Failures &nbsp;&nbsp;${boxes(3,ds[1])}</p></div>
@@ -4614,7 +4638,7 @@ function annotateRolls(doc){const s=playAdjust(snapshot()),mark=(el,key)=>{if(!e
   const vit=doc.querySelectorAll(".vitals .vital");mark(vit[3]&&vit[3].querySelector("b"),"init");mark(vit[2]&&vit[2].querySelector("b"),"hd");
   const tabAfter=t=>{const h=[...doc.querySelectorAll("h2")].find(x=>x.textContent.trim()===t);let n=h&&h.nextElementSibling;while(n&&n.tagName!=="TABLE")n=n.nextElementSibling;return n;};
   const sk=tabAfter("Skills");if(sk)[...sk.rows].forEach((tr,i)=>{const x=s.skills[i];if(x)mark(tr.cells[1],"skill:"+x.name);});
-  const at=tabAfter("Attacks");if(at)[...at.rows].slice(1).forEach((tr,i)=>{if(!s.attacks[i])return;mark(tr.cells[1],"atk:"+i);mark(tr.cells[2],s.attacks[i].vers?"dmg:"+i:"dmg:"+i);});
+  const at=tabAfter("Attacks");if(at)[...at.rows].slice(1).forEach((tr,i)=>{if(!s.attacks[i]){if(tr.dataset.sp)mark(tr.cells[0],"spell:"+tr.dataset.sp);return;}mark(tr.cells[1],"atk:"+i);mark(tr.cells[2],s.attacks[i].vers?"dmg:"+i:"dmg:"+i);});
   doc.querySelectorAll(".dsbox .lblx").forEach(el=>mark(el,"death"));doc.querySelectorAll(".hdbox .lblx").forEach(el=>mark(el,"hd"));
   doc.querySelectorAll("dl.kv dt").forEach(dt=>{const t=dt.textContent,dd=dt.nextElementSibling;if(t==="Spell save DC")mark(dd,"spelldc:");else if(t==="Spell attack")mark(dd,"spellatk:");
     else{const mm=/^(.*) spells$/.exec(t);if(mm&&s.multi){const k=(s.casters||[]).find(x=>x.cls===mm[1]);if(k)mark(dd,"spellatk:"+k.cast);}}});
